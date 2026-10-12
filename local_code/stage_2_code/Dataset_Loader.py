@@ -25,10 +25,9 @@ class Dataset_Loader(dataset):
         super().__init__(dName, dDescription)
 
 
-'''
-Reads one CSV file and splits it into features (X) and labels (y).
-
-'''
+    '''
+    Reads one CSV file and splits it into features (X) and labels (y).
+    '''
     def _load_file(self, file_path):
         X, y = [], []                           # Empty containers for features & labels
         with open(file_path, 'r') as f:         # Open the file and "with" ensures it closes after completion even if error occurs midway
