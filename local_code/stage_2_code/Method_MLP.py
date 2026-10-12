@@ -18,6 +18,7 @@ class Method_MLP(method, nn.Module):
     max_epoch = 500
     # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-3
+    batch_size = 64
 
     # it defines the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
