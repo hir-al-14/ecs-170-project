@@ -30,5 +30,3 @@ class Setting_Train_Test_Split(setting):
         self.evaluate.data = learned_result
         
         return self.evaluate.evaluate(), None
-
-        
