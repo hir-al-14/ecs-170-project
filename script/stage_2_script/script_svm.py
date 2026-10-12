@@ -14,9 +14,9 @@ if 1:
     #------------------------------------------------------
 
     # ---- objection initialization setction ---------------
-    data_obj = Dataset_Loader('toy', '')
+    data_obj = Dataset_Loader('stage_2_Loader', '')
     data_obj.dataset_source_folder_path = '../../data/stage_2_data/'
-    data_obj.dataset_source_file_name = 'toy_data_file.txt'
+    data_obj.dataset_source_file_name = 'train.csv'
 
     method_obj = Method_SVM('support vector machine', '')
     method_obj.c = c
