@@ -50,6 +50,7 @@ class Method_MLP(method, nn.Module):
         X_tensor = torch.FloatTensor(np.array(X))
         y_tensor = torch.LongTensor(np.array(y))
         n_samples = X_tensor.shape[0]
+        self.loss_history = []
 
 
         for epoch in range(self.max_epoch):
@@ -76,6 +77,7 @@ class Method_MLP(method, nn.Module):
 
             avg_loss = np.mean(epoch_losses)
             train_acc = epoch_correct / n_samples
+            self.loss_history.append(avg_loss)
 
             if epoch % 100 == 0:
                 print('Epoch:', epoch, 'Loss:', avg_loss, 'Accuracy:', train_acc)
