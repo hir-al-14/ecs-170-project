@@ -4,6 +4,7 @@ from local_code.stage_2_code.Result_Saver import Result_Saver
 # from local_code.stage_2_code.Setting_KFold_CV import Setting_KFold_CV
 # from local_code.stage_2_code.Setting_Train_Test_Split import Setting_Train_Test_Split
 from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
+from local_code.stage_2_code.plot_utils import plot_learning_curve
 import numpy as np
 import torch
 
@@ -42,6 +43,8 @@ if 1:
     print('--training and testing...')
     method_obj.data = loaded_data
     learned_result = method_obj.run()
+    print('--plotting learning curve...')
+    plot_learning_curve(method_obj.loss_history, '../../result/stage_2_result/MLP_learning_curve.png', 'MLP Training Loss')
 
     print('--saving results...')
     result_obj.data = learned_result
