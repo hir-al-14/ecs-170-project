@@ -27,13 +27,13 @@ class Method_MLP_Ablation(method, nn.Module):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
         # check here for nn.Linear doc: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-        self.fc_layer_1 = nn.Linear(784, 128)
+        self.fc_layer_1 = nn.Linear(784, 512)
         self.activation_func_1 = nn.ReLU()
 
-        self.fc_layer_2 = nn.Linear(128, 64)
+        self.fc_layer_2 = nn.Linear(512, 256)
         self.activation_func_2 = nn.ReLU()
 
-        self.fc_layer_3 = nn.Linear(64, 10)
+        self.fc_layer_3 = nn.Linear(256, 10)
 
     # it defines the forward propagation function for input x
     # this function will calculate the output layer by layer
