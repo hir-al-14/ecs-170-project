@@ -17,7 +17,7 @@ class Method_MLP_Ablation(method, nn.Module):
     # it defines the max rounds to train the model
     max_epoch = 500
     # it defines the learning rate for gradient descent based optimizer for model learning
-    learning_rate = 1e-2
+    learning_rate = 1e-4
     batch_size = 64
 
     # it defines the MLP model architecture, e.g.,
