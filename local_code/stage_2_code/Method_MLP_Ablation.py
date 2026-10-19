@@ -17,7 +17,7 @@ class Method_MLP_Ablation(method, nn.Module):
     # it defines the max rounds to train the model
     max_epoch = 500
     # it defines the learning rate for gradient descent based optimizer for model learning
-    learning_rate = 1e-3
+    learning_rate = 1e-2
     batch_size = 64
 
     # it defines the MLP model architecture, e.g.,
@@ -45,7 +45,7 @@ class Method_MLP_Ablation(method, nn.Module):
         return y_pred
 
     def train(self, X, y):
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         loss_function = nn.CrossEntropyLoss()
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
 
