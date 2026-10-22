@@ -2,7 +2,7 @@ from local_code.stage_2_code.Dataset_Loader import Dataset_Loader
 from local_code.stage_2_code.Method_MLP import Method_MLP
 from local_code.stage_2_code.Result_Saver import Result_Saver
 # from local_code.stage_2_code.Setting_KFold_CV import Setting_KFold_CV
-from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
+from local_code.stage_2_code.Evaluate_Classification import Evaluate_Classification
 from local_code.stage_2_code.plot_utils import plot_learning_curve
 import numpy as np
 import torch
@@ -24,7 +24,7 @@ if 1:
     result_obj.result_destination_folder_path = '../../result/stage_2_result/MLP_'
     result_obj.result_destination_file_name = 'prediction_result'
 
-    evaluate_obj = Evaluate_Accuracy('accuracy', '')
+    evaluate_obj = Evaluate_Classification('weighted classification metrics', '')
     # ------------------------------------------------------
 
     # ---- running section ---------------------------------
@@ -48,10 +48,13 @@ if 1:
 
     print('--evaluating...')
     evaluate_obj.data = learned_result
-    score = evaluate_obj.evaluate()
+    scores = evaluate_obj.evaluate()
 
     print('************ Overall Performance ************')
-    print('MLP Accuracy: ' + str(score))
+    print(f"MLP Accuracy: {scores['accuracy']:.4f}")
+    print(f"MLP Precision (weighted): {scores['precision']:.4f}")
+    print(f"MLP Recall (weighted): {scores['recall']:.4f}")
+    print(f"MLP F1 (weighted): {scores['f1']:.4f}")
     print('************ Finish ************')
     # ------------------------------------------------------
     
