@@ -60,7 +60,7 @@ class Method_MLP_Ablation(method, nn.Module):
             X_shuffled = X_tensor[perm]
             y_shuffled = y_tensor[perm]
 
-            epoch_losses = []
+            epoch_loss_sum = 0.0
             epoch_correct = 0
 
             for i in range(0, n_samples, self.batch_size):
@@ -74,10 +74,10 @@ class Method_MLP_Ablation(method, nn.Module):
                 train_loss.backward()
                 optimizer.step()
 
-                epoch_losses.append(train_loss.item())
+                epoch_loss_sum += train_loss.item() * len(y_batch)
                 epoch_correct += (y_pred.max(1)[1] == y_batch).sum().item()
 
-            avg_loss = np.mean(epoch_losses)
+            avg_loss = epoch_loss_sum / n_samples
             train_acc = epoch_correct / n_samples
             self.loss_history.append(avg_loss)
 
