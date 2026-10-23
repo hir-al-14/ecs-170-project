@@ -2,7 +2,6 @@ from local_code.stage_2_code.Dataset_Loader import Dataset_Loader
 from local_code.stage_2_code.Method_MLP import Method_MLP
 from local_code.stage_2_code.Result_Saver import Result_Saver
 # from local_code.stage_2_code.Setting_KFold_CV import Setting_KFold_CV
-# from local_code.stage_2_code.Setting_Train_Test_Split import Setting_Train_Test_Split
 from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 from local_code.stage_2_code.plot_utils import plot_learning_curve
 import numpy as np
@@ -24,9 +23,6 @@ if 1:
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = '../../result/stage_2_result/MLP_'
     result_obj.result_destination_file_name = 'prediction_result'
-
-    #setting_obj = Setting_Train_Test_Split('train test split', '')
-    # in_Test_Split('train test split', '')
 
     evaluate_obj = Evaluate_Accuracy('accuracy', '')
     # ------------------------------------------------------

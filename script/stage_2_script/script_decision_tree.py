@@ -2,7 +2,6 @@ from local_code.stage_2_code.Dataset_Loader import Dataset_Loader
 from local_code.stage_2_code.Method_DT import Method_DT
 from local_code.stage_2_code.Result_Saver import Result_Saver
 from local_code.stage_2_code.Setting_KFold_CV import Setting_KFold_CV
-from local_code.stage_2_code.Setting_Train_Test_Split import Setting_Train_Test_Split
 from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import numpy as np
 
