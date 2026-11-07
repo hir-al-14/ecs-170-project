@@ -1,17 +1,29 @@
 """
 Method_CNN_Base.py
 
-Shared training / evaluation / plotting logic for the Stage 3 CNN models.
-Subclasses only define their architecture in _build().
+Minimal shared base class for the Stage 3 CNN models.
 
-If your course template has a `method` base classgi (as used by Method_MLP.py),
-you can change the base to `class Method_CNN_Base(method, nn.Module)`.
+The interface deliberately mirrors the existing Method_CNN_ORL.py so a model can
+be moved onto this base without changing how it is called:
+
+    model = SomeCNN()
+    model.train_model(train_set)        # fills model.loss_history / model.acc_history
+    pred_y = model.test_model(test_set) # numpy array of predicted labels
+    scores = model.evaluate(test_set)   # accuracy / precision / recall / f1
+    model.plot_learning_curve()         # saves the loss curve
+
+It only relies on the torch Dataset protocol (len + (image, label) items), so it
+works with the original Method_Dataset_Loader and the updated one alike.
+
+Subclasses define two attributes in __init__:
+    self.conv_layers   nn.Sequential, (N, C, H, W) -> feature maps
+    self.fc_layers     nn.Sequential, flattened features -> class logits
 """
 
-import time
+import os
 import numpy as np
 import torch
-from torch import nn
+import torch.nn as nn
 from torch.utils.data import DataLoader
 
 
@@ -24,325 +36,97 @@ def get_device():
 
 
 class Method_CNN_Base(nn.Module):
-    # default hyperparameters (override per subclass or via __init__ kwargs)
-    max_epoch = 20
-    learning_rate = 1e-3
+    # defaults, overridable per subclass (same names as Method_CNN_ORL.py)
+    learning_rate = 0.001
     batch_size = 64
+    max_epoch = 30
     weight_decay = 0.0
 
-    def __init__(self, input_shape, num_classes, name='CNN', **hparams):
+    def __init__(self):
         super().__init__()
-        self.name = name
-        self.input_shape = tuple(input_shape)      # (C, H, W)
-        self.num_classes = int(num_classes)
-
-        # allow overriding any class-level hyperparameter, e.g. max_epoch=30
-        for k, v in hparams.items():
-            setattr(self, k, v)
-
         self.device = get_device()
-        self.history = {'train_loss': [], 'train_acc': [], 'test_loss': [], 'test_acc': []}
-
-        self.features, self.classifier = self._build()   # subclass defines these
-        self.loss_fn = nn.CrossEntropyLoss()
-        self.to(self.device)
-
-    # architecture hook
-    def _build(self):
-        raise NotImplementedError
-
-    def _flat_dim(self, features):
-        """Size of the flattened feature map, found with a dummy forward pass."""
-        with torch.no_grad():
-            was_training = features.training
-            features.eval()
-            out = features(torch.zeros(1, *self.input_shape))
-            features.train(was_training)
-        return int(np.prod(out.shape[1:]))
+        self.loss_history = []   # mean training loss per epoch
+        self.acc_history = []    # training accuracy per epoch
 
     def forward(self, x):
-        x = self.features(x)
-        x = torch.flatten(x, 1)
-        return self.classifier(x)
-
-    # evaluation
-    @torch.no_grad()
-    def evaluate(self, dataset, batch_size=256):
-        self.eval()
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        total_loss, preds, labels = 0.0, [], []
-        for x, y in loader:
-            x, y = x.to(self.device), y.to(self.device)
-            logits = self(x)
-            total_loss += self.loss_fn(logits, y).item() * len(y)
-            preds.append(logits.argmax(1).cpu().numpy())
-            labels.append(y.cpu().numpy())
-        preds, labels = np.concatenate(preds), np.concatenate(labels)
-        return total_loss / len(dataset), preds, labels
+        return self.fc_layers(self.conv_layers(x))
 
     @staticmethod
-    def metrics(preds, labels, num_classes):
-        """Accuracy plus weighted precision / recall / F1 (no sklearn needed)."""
-        acc = float((preds == labels).mean())
-        p_sum = r_sum = f_sum = 0.0
-        for c in range(num_classes):
-            tp = float(((preds == c) & (labels == c)).sum())
-            fp = float(((preds == c) & (labels != c)).sum())
-            fn = float(((preds != c) & (labels == c)).sum())
-            support = tp + fn
-            prec = tp / (tp + fp) if tp + fp else 0.0
-            rec = tp / (tp + fn) if tp + fn else 0.0
-            f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0.0
-            p_sum += prec * support
-            r_sum += rec * support
-            f_sum += f1 * support
-        n = float(len(labels))
-        return {'accuracy': acc, 'precision': p_sum / n, 'recall': r_sum / n, 'f1': f_sum / n}
-
-    # training
-    def fit(self, train_set, test_set=None, verbose=True):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate,
-                                     weight_decay=self.weight_decay)
-        loader = DataLoader(train_set, batch_size=self.batch_size, shuffle=True)
-
-        start = time.time()
-        for epoch in range(1, self.max_epoch + 1):
-            self.train()
-            run_loss, correct = 0.0, 0
-            for x, y in loader:
-                x, y = x.to(self.device), y.to(self.device)
-                optimizer.zero_grad()
-                logits = self(x)
-                loss = self.loss_fn(logits, y)
-                loss.backward()
-                optimizer.step()
-                run_loss += loss.item() * len(y)
-                correct += (logits.argmax(1) == y).sum().item()
-
-            self.history['train_loss'].append(run_loss / len(train_set))
-            self.history['train_acc'].append(correct / len(train_set))
-
-            msg = (f"[{self.name}] epoch {epoch:3d}/{self.max_epoch} "
-                   f"train_loss={self.history['train_loss'][-1]:.4f} "
-                   f"train_acc={self.history['train_acc'][-1]:.4f}")
-            if test_set is not None:
-                t_loss, p, l = self.evaluate(test_set)
-                self.history['test_loss'].append(t_loss)
-                self.history['test_acc'].append(float((p == l).mean()))
-                msg += f" test_loss={t_loss:.4f} test_acc={self.history['test_acc'][-1]:.4f}"
-            if verbose:
-                print(msg, flush=True)
-
-        self.train_time = time.time() - start
-
-    def run(self, train_set, test_set, verbose=True):
-        """Train, then evaluate on the test set. Returns a results dict."""
-        self.fit(train_set, test_set, verbose=verbose)
-        _, preds, labels = self.evaluate(test_set)
-        res = self.metrics(preds, labels, self.num_classes)
-        res['train_time_s'] = self.train_time
-        res['n_params'] = sum(p.numel() for p in self.parameters())
-        return res
-
-    # plotting
-    def plot_learning_curves(self, path=None, show=False):
-        import matplotlib
-        if not show:
-            matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-
-        epochs = range(1, len(self.history['train_loss']) + 1)
-        fig, ax = plt.subplots(1, 2, figsize=(11, 4))
-
-        ax[0].plot(epochs, self.history['train_loss'], label='train')
-        if self.history['test_loss']:
-            ax[0].plot(epochs, self.history['test_loss'], label='test')
-        ax[0].set_xlabel('Epoch'); ax[0].set_ylabel('Cross-entropy loss')
-        ax[0].set_title(f'{self.name}: loss'); ax[0].legend(); ax[0].grid(alpha=.3)
-
-        ax[1].plot(epochs, self.history['train_acc'], label='train')
-        if self.history['test_acc']:
-            ax[1].plot(epochs, self.history['test_acc'], label='test')
-        ax[1].set_xlabel('Epoch'); ax[1].set_ylabel('Accuracy')
-        ax[1].set_title(f'{self.name}: accuracy'); ax[1].legend(); ax[1].grid(alpha=.3)
-
-        fig.tight_layout()
-        if path:
-            fig.savefig(path, dpi=150)
-        if show:
-            plt.show()
-        plt.close(fig)
-"""
-Method_CNN_Base.py
-
-Shared training / evaluation / plotting logic for the Stage 3 CNN models.
-Subclasses only define their architecture in _build().
-
-If your course template has a `method` base class (as used by Method_MLP.py),
-you can change the base to `class Method_CNN_Base(method, nn.Module)`.
-"""
-
-import time
-import numpy as np
-import torch
-from torch import nn
-from torch.utils.data import DataLoader
-
-
-def get_device():
-    if torch.cuda.is_available():
-        return torch.device('cuda')
-    if getattr(torch.backends, 'mps', None) and torch.backends.mps.is_available():
-        return torch.device('mps')
-    return torch.device('cpu')
-
-
-class Method_CNN_Base(nn.Module):
-    # default hyperparameters (override per subclass or via __init__ kwargs)
-    max_epoch = 20
-    learning_rate = 1e-3
-    batch_size = 64
-    weight_decay = 0.0
-
-    def __init__(self, input_shape, num_classes, name='CNN', **hparams):
-        super().__init__()
-        self.name = name
-        self.input_shape = tuple(input_shape)      # (C, H, W)
-        self.num_classes = int(num_classes)
-
-        # allow overriding any class-level hyperparameter, e.g. max_epoch=30
-        for k, v in hparams.items():
-            setattr(self, k, v)
-
-        self.device = get_device()
-        self.history = {'train_loss': [], 'train_acc': [], 'test_loss': [], 'test_acc': []}
-
-        self.features, self.classifier = self._build()   # subclass defines these
-        self.loss_fn = nn.CrossEntropyLoss()
-        self.to(self.device)
-
-    # architecture hook
-    def _build(self):
-        raise NotImplementedError
-
-    def _flat_dim(self, features):
-        """Size of the flattened feature map, found with a dummy forward pass."""
+    def flat_dim(conv_layers, input_shape):
+        """Number of features after conv_layers for an input of (C, H, W)."""
         with torch.no_grad():
-            was_training = features.training
-            features.eval()
-            out = features(torch.zeros(1, *self.input_shape))
-            features.train(was_training)
-        return int(np.prod(out.shape[1:]))
-
-    def forward(self, x):
-        x = self.features(x)
-        x = torch.flatten(x, 1)
-        return self.classifier(x)
-
-    # evaluation
-    @torch.no_grad()
-    def evaluate(self, dataset, batch_size=256):
-        self.eval()
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        total_loss, preds, labels = 0.0, [], []
-        for x, y in loader:
-            x, y = x.to(self.device), y.to(self.device)
-            logits = self(x)
-            total_loss += self.loss_fn(logits, y).item() * len(y)
-            preds.append(logits.argmax(1).cpu().numpy())
-            labels.append(y.cpu().numpy())
-        preds, labels = np.concatenate(preds), np.concatenate(labels)
-        return total_loss / len(dataset), preds, labels
-
-    @staticmethod
-    def metrics(preds, labels, num_classes):
-        """Accuracy plus weighted precision / recall / F1 (no sklearn needed)."""
-        acc = float((preds == labels).mean())
-        p_sum = r_sum = f_sum = 0.0
-        for c in range(num_classes):
-            tp = float(((preds == c) & (labels == c)).sum())
-            fp = float(((preds == c) & (labels != c)).sum())
-            fn = float(((preds != c) & (labels == c)).sum())
-            support = tp + fn
-            prec = tp / (tp + fp) if tp + fp else 0.0
-            rec = tp / (tp + fn) if tp + fn else 0.0
-            f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0.0
-            p_sum += prec * support
-            r_sum += rec * support
-            f_sum += f1 * support
-        n = float(len(labels))
-        return {'accuracy': acc, 'precision': p_sum / n, 'recall': r_sum / n, 'f1': f_sum / n}
+            return int(np.prod(conv_layers(torch.zeros(1, *input_shape)).shape[1:]))
 
     # training
-    def fit(self, train_set, test_set=None, verbose=True):
+    def train_model(self, train_set):
+        self.to(self.device)
+        self.train()
+        loader = DataLoader(train_set, batch_size=self.batch_size, shuffle=True)
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate,
                                      weight_decay=self.weight_decay)
-        loader = DataLoader(train_set, batch_size=self.batch_size, shuffle=True)
+        loss_function = nn.CrossEntropyLoss()
+        self.loss_history, self.acc_history = [], []
 
-        start = time.time()
-        for epoch in range(1, self.max_epoch + 1):
-            self.train()
-            run_loss, correct = 0.0, 0
-            for x, y in loader:
-                x, y = x.to(self.device), y.to(self.device)
+        for epoch in range(self.max_epoch):
+            loss_sum, correct = 0.0, 0
+            for X_batch, y_batch in loader:
+                X_batch, y_batch = X_batch.to(self.device), y_batch.to(self.device)
+                y_pred = self.forward(X_batch)
+                loss = loss_function(y_pred, y_batch)
+
                 optimizer.zero_grad()
-                logits = self(x)
-                loss = self.loss_fn(logits, y)
                 loss.backward()
                 optimizer.step()
-                run_loss += loss.item() * len(y)
-                correct += (logits.argmax(1) == y).sum().item()
 
-            self.history['train_loss'].append(run_loss / len(train_set))
-            self.history['train_acc'].append(correct / len(train_set))
+                loss_sum += loss.item() * len(y_batch)
+                correct += (y_pred.argmax(dim=1) == y_batch).sum().item()
 
-            msg = (f"[{self.name}] epoch {epoch:3d}/{self.max_epoch} "
-                   f"train_loss={self.history['train_loss'][-1]:.4f} "
-                   f"train_acc={self.history['train_acc'][-1]:.4f}")
-            if test_set is not None:
-                t_loss, p, l = self.evaluate(test_set)
-                self.history['test_loss'].append(t_loss)
-                self.history['test_acc'].append(float((p == l).mean()))
-                msg += f" test_loss={t_loss:.4f} test_acc={self.history['test_acc'][-1]:.4f}"
-            if verbose:
-                print(msg, flush=True)
+            avg_loss = loss_sum / len(train_set)
+            self.loss_history.append(avg_loss)
+            self.acc_history.append(correct / len(train_set))
+            print('Epoch:', epoch, 'Loss:', avg_loss, 'Acc:', self.acc_history[-1])
 
-        self.train_time = time.time() - start
+    # testing
+    def _predict(self, dataset):
+        self.to(self.device)
+        self.eval()
+        loader = DataLoader(dataset, batch_size=500, shuffle=False)
+        preds, labels = [], []
+        with torch.no_grad():
+            for X_batch, y_batch in loader:
+                preds.append(self.forward(X_batch.to(self.device)).argmax(dim=1).cpu().numpy())
+                labels.append(y_batch.numpy())
+        return np.concatenate(preds), np.concatenate(labels)
 
-    def run(self, train_set, test_set, verbose=True):
-        """Train, then evaluate on the test set. Returns a results dict."""
-        self.fit(train_set, test_set, verbose=verbose)
-        _, preds, labels = self.evaluate(test_set)
-        res = self.metrics(preds, labels, self.num_classes)
-        res['train_time_s'] = self.train_time
-        res['n_params'] = sum(p.numel() for p in self.parameters())
-        return res
+    def test_model(self, test_set):
+        return self._predict(test_set)[0]
+
+    def evaluate(self, test_set):
+        from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+        pred_y, true_y = self._predict(test_set)
+        precision, recall, f1, _ = precision_recall_fscore_support(
+            true_y, pred_y, average='weighted', zero_division=0)
+        return {'accuracy': accuracy_score(true_y, pred_y),
+                'precision': precision, 'recall': recall, 'f1': f1}
 
     # plotting
-    def plot_learning_curves(self, path=None, show=False):
+    @staticmethod
+    def result_dir():
+        d = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'result', 'stage_3_result')
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def plot_learning_curve(self, file_name, title='CNN Training Loss'):
         import matplotlib
-        if not show:
-            matplotlib.use('Agg')
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-
-        epochs = range(1, len(self.history['train_loss']) + 1)
-        fig, ax = plt.subplots(1, 2, figsize=(11, 4))
-
-        ax[0].plot(epochs, self.history['train_loss'], label='train')
-        if self.history['test_loss']:
-            ax[0].plot(epochs, self.history['test_loss'], label='test')
-        ax[0].set_xlabel('Epoch'); ax[0].set_ylabel('Cross-entropy loss')
-        ax[0].set_title(f'{self.name}: loss'); ax[0].legend(); ax[0].grid(alpha=.3)
-
-        ax[1].plot(epochs, self.history['train_acc'], label='train')
-        if self.history['test_acc']:
-            ax[1].plot(epochs, self.history['test_acc'], label='test')
-        ax[1].set_xlabel('Epoch'); ax[1].set_ylabel('Accuracy')
-        ax[1].set_title(f'{self.name}: accuracy'); ax[1].legend(); ax[1].grid(alpha=.3)
-
-        fig.tight_layout()
-        if path:
-            fig.savefig(path, dpi=150)
-        if show:
-            plt.show()
-        plt.close(fig)
+        epochs = range(1, len(self.loss_history) + 1)
+        plt.figure()
+        plt.plot(epochs, self.loss_history)
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.title(title)
+        path = os.path.join(self.result_dir(), file_name)
+        plt.savefig(path)
+        plt.close()
+        return path
