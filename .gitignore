@@ -183,3 +183,5 @@ fabric.properties
 # .idea
 
 .DS_Store
+
+*:Zone.Identifiers
