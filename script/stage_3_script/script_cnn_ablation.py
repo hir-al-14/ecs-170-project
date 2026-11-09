@@ -5,13 +5,13 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from torch import nn
 from torch.utils.data import DataLoader, Subset
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from local_code.stage_3_code.Evaluate_Classification import evaluate_predictions
 from local_code.stage_3_code.Method_Dataset_Loader import (
     Dataset_MNIST, Dataset_ORL, Dataset_CIFAR
 )
@@ -244,18 +244,7 @@ def main():
                 predicted.extend(predictions)
                 actual.extend(y.tolist())
 
-        precision, recall, f1, _ = (
-            precision_recall_fscore_support(
-                actual,
-                predicted,
-                average='weighted',
-                zero_division=0
-            )
-        )
-
-        accuracy = accuracy_score(
-            actual, predicted
-        )
+        scores = evaluate_predictions(actual, predicted)
 
         rows.append({
             'dataset': args.dataset,
@@ -263,17 +252,14 @@ def main():
             'parameters': sum(
                 p.numel() for p in model.parameters()
             ),
-            'accuracy': accuracy,
-            'precision': precision,
-            'recall': recall,
-            'f1': f1
+            **scores
         })
 
         curves[variant] = loss_history
 
         print(
             'TEST ACCURACY:',
-            f'{accuracy:.4f}',
+            f"{scores['accuracy']:.4f}",
             flush=True
         )
 
