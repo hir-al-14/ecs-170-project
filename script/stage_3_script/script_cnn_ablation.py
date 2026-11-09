@@ -6,6 +6,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
+from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.utils.data import DataLoader, Subset
 
@@ -98,6 +99,17 @@ class CNN(nn.Module):
         return self.fc(self.conv(x))
 
 
+def split_training_data(dataset, validation_fraction):
+    """Keep class proportions and use the same split for every tuning run."""
+    train_indices, validation_indices = train_test_split(
+        list(range(len(dataset))),
+        test_size=validation_fraction,
+        random_state=1,
+        stratify=dataset.labels,
+    )
+    return Subset(dataset, train_indices), Subset(dataset, validation_indices)
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -127,7 +139,15 @@ def main():
                         default=VARIANTS,
                         help='Architectures to run (default: all three)')
 
+    parser.add_argument('--validation-fraction', type=float, default=0.0,
+                        help='Fraction of training data used for validation; '
+                             '0 evaluates on the supplied test set (default)')
+
     args = parser.parse_args()
+    if not math.isfinite(args.validation_fraction) or not 0 <= args.validation_fraction < 1:
+        parser.error('--validation-fraction must be in [0, 1)')
+    if args.validation_fraction > 0 and args.output_dir is None:
+        parser.error('Use --output-dir to keep validation results separate')
     if not math.isfinite(args.learning_rate) or args.learning_rate <= 0:
         parser.error('--learning-rate must be a finite positive number')
     if args.batch_size is not None and args.batch_size <= 0:
@@ -156,17 +176,29 @@ def main():
                 )
 
     train = dataset_class('train')
-    test = dataset_class('test')
 
     shape = tuple(train.data.shape[1:])
     epochs, batch_size, weight_decay = SETTINGS[args.dataset]
+
+    if args.validation_fraction > 0:
+        try:
+            train, evaluation_set = split_training_data(train, args.validation_fraction)
+        except ValueError as error:
+            parser.error(f'Cannot create stratified validation split: {error}')
+        evaluation_split = 'validation'
+    else:
+        evaluation_set = dataset_class('test')
+        evaluation_split = 'test'
+
+    print(f'Training samples: {len(train)}, '
+          f'{evaluation_split} samples: {len(evaluation_set)}')
 
     if args.batch_size is not None:
         batch_size = args.batch_size
 
     if args.quick:
         train = Subset(train, range(min(96, len(train))))
-        test = Subset(test, range(min(48, len(test))))
+        evaluation_set = Subset(evaluation_set, range(min(48, len(evaluation_set))))
         epochs = 1
 
     if torch.cuda.is_available():
@@ -193,6 +225,8 @@ def main():
         out = args.output_dir.resolve()
         if args.quick:
             out = out / 'quick_test'
+    if evaluation_split == 'validation':
+        out = out / 'validation'
     out.mkdir(parents=True, exist_ok=True)
 
     rows = []
@@ -255,12 +289,12 @@ def main():
         predicted = []
 
         with torch.no_grad():
-            test_loader = DataLoader(
-                test,
+            evaluation_loader = DataLoader(
+                evaluation_set,
                 batch_size=batch_size * 2
             )
 
-            for x, y in test_loader:
+            for x, y in evaluation_loader:
                 predictions = model(
                     x.to(device)
                 ).argmax(1).cpu().tolist()
@@ -279,6 +313,10 @@ def main():
             'weight_decay': weight_decay,
             'seed': 1,
             'quick': args.quick,
+            'evaluation_split': evaluation_split,
+            'validation_fraction': args.validation_fraction,
+            'train_samples': len(train),
+            'evaluation_samples': len(evaluation_set),
             'parameters': sum(
                 p.numel() for p in model.parameters()
             ),
@@ -288,7 +326,7 @@ def main():
         curves[variant] = loss_history
 
         print(
-            'TEST ACCURACY:',
+            f'{evaluation_split.upper()} ACCURACY:',
             f"{scores['accuracy']:.4f}",
             flush=True
         )
