@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:0c110e66af12767ef6e1673830cb3f0f3963e35f6b18a2ac91f4693504b8445b
-size 327
+dataset,variant,learning_rate,batch_size,epochs,weight_decay,seed,quick,evaluation_split,validation_fraction,train_samples,evaluation_samples,parameters,accuracy,precision,recall,f1
+orl,baseline,0.0001,16,30,0.0,1,False,validation,0.2,288,72,1290152,0.8888888888888888,0.8611111111111112,0.8888888888888888,0.860185185185185
