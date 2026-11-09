@@ -1,2 +1,5 @@
 *.csv filter=lfs diff=lfs merge=lfs -text
 data/stage_3_data/* filter=lfs diff=lfs merge=lfs -text
+# Keep small tuning tables and loss histories readable without Git LFS.
+result/stage_3_result/hiral_tuning/**/*.csv -filter -diff -merge text
+result/stage_3_result/hiral_tuning/*.csv -filter -diff -merge text

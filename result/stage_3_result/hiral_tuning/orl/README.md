@@ -11,7 +11,7 @@ All runs use the baseline ORL architecture, Adam, cross-entropy, 30 epochs, and 
 
 Selection criterion: highest validation weighted F1. Batch size 8 with learning rate 0.001 ranks first among these four settings. Its accuracy matches the baseline (68/72 correct), so the small F1 improvement is not evidence of a robust advantage across seeds or splits. The lower learning rate is worse under the fixed 30-epoch budget; the higher learning rate finishes with loss near 3.69 and poor validation performance.
 
-These are validation results, not final test results. Retrain the selected configuration on all 360 training images before final test evaluation.
+The table above contains validation results. The selected configuration was subsequently retrained on all 360 training images and evaluated on the 40 test images: accuracy 97.50%, weighted precision 96.25%, weighted recall 97.50%, and weighted F1 96.67%. Predictions and the convergence curve are saved in `final/`.
 
 Example reproduction command (use a fresh output directory for each experiment):
 
