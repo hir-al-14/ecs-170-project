@@ -1,0 +1,7 @@
+{
+  "criterion": "validation weighted F1",
+  "selected_experiment": "small_batch",
+  "learning_rate": 0.001,
+  "batch_size": 32,
+  "validation_f1": 0.8458264675539251
+}

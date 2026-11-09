@@ -1,0 +1,17 @@
+[
+  "/Users/hiral/Projects/ecs-170-project/.venv/bin/python",
+  "/Users/hiral/Projects/ecs-170-project/script/stage_3_script/script_cnn_ablation.py",
+  "cifar",
+  "--variants",
+  "baseline",
+  "--learning-rate",
+  "0.001",
+  "--batch-size",
+  "32",
+  "--output-dir",
+  "/Users/hiral/Projects/ecs-170-project/result/stage_3_result/hiral_tuning/cifar/small_batch",
+  "--device",
+  "mps",
+  "--validation-fraction",
+  "0.2"
+]

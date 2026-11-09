@@ -1,0 +1,5 @@
+experiment,dataset,variant,learning_rate,batch_size,epochs,weight_decay,seed,device,torch_version,optimizer,loss_function,duration_seconds,quick,evaluation_split,validation_fraction,train_samples,evaluation_samples,parameters,accuracy,precision,recall,f1
+baseline,cifar,baseline,0.001,64,30,0.0001,1,mps,2.14.1,Adam,CrossEntropyLoss,111.1782974999951,False,validation,0.2,40000,10000,815018,0.8427,0.849214285885175,0.8427,0.8435896329477593
+low_lr,cifar,baseline,0.0001,64,30,0.0001,1,mps,2.14.1,Adam,CrossEntropyLoss,110.31191308300185,False,validation,0.2,40000,10000,815018,0.825,0.8269440162287818,0.825,0.8241988416137561
+high_lr,cifar,baseline,0.01,64,30,0.0001,1,mps,2.14.1,Adam,CrossEntropyLoss,113.7009885840016,False,validation,0.2,40000,10000,815018,0.6811,0.6969652548698254,0.6811,0.6785035196757232
+small_batch,cifar,baseline,0.001,32,30,0.0001,1,mps,2.14.1,Adam,CrossEntropyLoss,150.93608833300095,False,validation,0.2,40000,10000,815018,0.8463,0.8482390638676327,0.8463,0.8458264675539251

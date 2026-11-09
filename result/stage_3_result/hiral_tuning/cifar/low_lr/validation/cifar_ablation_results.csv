@@ -1,0 +1,2 @@
+dataset,variant,learning_rate,batch_size,epochs,weight_decay,seed,device,torch_version,optimizer,loss_function,duration_seconds,quick,evaluation_split,validation_fraction,train_samples,evaluation_samples,parameters,accuracy,precision,recall,f1
+cifar,baseline,0.0001,64,30,0.0001,1,mps,2.14.1,Adam,CrossEntropyLoss,110.31191308300185,False,validation,0.2,40000,10000,815018,0.825,0.8269440162287818,0.825,0.8241988416137561
