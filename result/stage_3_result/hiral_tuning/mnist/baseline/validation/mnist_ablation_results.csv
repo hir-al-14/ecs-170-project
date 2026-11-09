@@ -1,0 +1,2 @@
+dataset,variant,learning_rate,batch_size,epochs,weight_decay,seed,device,torch_version,optimizer,loss_function,duration_seconds,quick,evaluation_split,validation_fraction,train_samples,evaluation_samples,parameters,accuracy,precision,recall,f1
+mnist,baseline,0.001,64,15,0.0,1,mps,2.14.1,Adam,CrossEntropyLoss,25.239170417000423,False,validation,0.2,48000,12000,169064,0.98775,0.9877990147502934,0.98775,0.9877425790149308
