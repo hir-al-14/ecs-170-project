@@ -1,6 +1,8 @@
 import argparse
 import csv
 import math
+import json
+import time
 import sys
 from pathlib import Path
 
@@ -143,6 +145,9 @@ def main():
                         help='Fraction of training data used for validation; '
                              '0 evaluates on the supplied test set (default)')
 
+    parser.add_argument('--device', choices=['auto', 'cpu', 'mps', 'cuda'],
+                        default='auto', help='Training device (default: auto)')
+
     args = parser.parse_args()
     if not math.isfinite(args.validation_fraction) or not 0 <= args.validation_fraction < 1:
         parser.error('--validation-fraction must be in [0, 1)')
@@ -211,6 +216,13 @@ def main():
     else:
         device = torch.device('cpu')
 
+    if args.device != 'auto':
+        if args.device == 'mps' and not torch.backends.mps.is_available():
+            parser.error('MPS is not available in this process')
+        if args.device == 'cuda' and not torch.cuda.is_available():
+            parser.error('CUDA is not available in this process')
+        device = torch.device(args.device)
+
     print('Device:', device)
 
     folder_name = (
@@ -228,6 +240,10 @@ def main():
     if evaluation_split == 'validation':
         out = out / 'validation'
     out.mkdir(parents=True, exist_ok=True)
+
+    result_path = out / f'{args.dataset}_ablation_results.csv'
+    if result_path.exists():
+        parser.error(f'Results already exist at {result_path}; use a fresh output directory')
 
     rows = []
     curves = {}
@@ -253,6 +269,7 @@ def main():
         )
 
         loss_history = []
+        start_time = time.perf_counter()
 
         for epoch in range(epochs):
             model.train()
@@ -275,6 +292,10 @@ def main():
 
             average_loss = total_loss / len(train)
             loss_history.append(average_loss)
+            with (out / f'{args.dataset}_{variant}_loss_history.csv').open('w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['epoch', 'training_loss'])
+                writer.writerows(enumerate(loss_history, start=1))
 
             print(
                 f'{args.dataset} {variant}: '
@@ -303,6 +324,10 @@ def main():
                 actual.extend(y.tolist())
 
         scores = evaluate_predictions(actual, predicted)
+        with (out / f'{args.dataset}_{variant}_predictions.json').open('w') as file:
+            json.dump({'evaluation_split': evaluation_split,
+                       'true_y': actual, 'pred_y': predicted}, file)
+
 
         rows.append({
             'dataset': args.dataset,
@@ -312,6 +337,11 @@ def main():
             'epochs': epochs,
             'weight_decay': weight_decay,
             'seed': 1,
+            'device': str(device),
+            'torch_version': torch.__version__,
+            'optimizer': 'Adam',
+            'loss_function': 'CrossEntropyLoss',
+            'duration_seconds': time.perf_counter() - start_time,
             'quick': args.quick,
             'evaluation_split': evaluation_split,
             'validation_fraction': args.validation_fraction,
