@@ -1,5 +1,6 @@
 import argparse
 import csv
+import math
 import sys
 from pathlib import Path
 
@@ -116,7 +117,23 @@ def main():
         help='Small code test only, NOT report results'
     )
 
+    parser.add_argument('--learning-rate', type=float, default=0.001,
+                        help='Adam learning rate (default: 0.001)')
+    parser.add_argument('--batch-size', type=int,
+                        help='Override the dataset-specific training batch size')
+    parser.add_argument('--output-dir', type=Path,
+                        help='Separate folder for this experiment')
+    parser.add_argument('--variants', nargs='+', choices=VARIANTS,
+                        default=VARIANTS,
+                        help='Architectures to run (default: all three)')
+
     args = parser.parse_args()
+    if not math.isfinite(args.learning_rate) or args.learning_rate <= 0:
+        parser.error('--learning-rate must be a finite positive number')
+    if args.batch_size is not None and args.batch_size <= 0:
+        parser.error('--batch-size must be a positive integer')
+    if (args.learning_rate != 0.001 or args.batch_size is not None) and args.output_dir is None:
+        parser.error('Use --output-dir for tuning runs to preserve existing results')
 
     dataset_class = DATASETS[args.dataset]
 
@@ -144,6 +161,9 @@ def main():
     shape = tuple(train.data.shape[1:])
     epochs, batch_size, weight_decay = SETTINGS[args.dataset]
 
+    if args.batch_size is not None:
+        batch_size = args.batch_size
+
     if args.quick:
         train = Subset(train, range(min(96, len(train))))
         test = Subset(test, range(min(48, len(test))))
@@ -169,12 +189,16 @@ def main():
     out = (
         ROOT / 'result' / 'stage_3_result' / folder_name
     )
+    if args.output_dir is not None:
+        out = args.output_dir.resolve()
+        if args.quick:
+            out = out / 'quick_test'
     out.mkdir(parents=True, exist_ok=True)
 
     rows = []
     curves = {}
 
-    for variant in VARIANTS:
+    for variant in args.variants:
         torch.manual_seed(1)
 
         model = CNN(
@@ -183,7 +207,7 @@ def main():
 
         optimizer = torch.optim.Adam(
             model.parameters(),
-            lr=0.001,
+            lr=args.learning_rate,
             weight_decay=weight_decay
         )
 
@@ -249,6 +273,12 @@ def main():
         rows.append({
             'dataset': args.dataset,
             'variant': variant,
+            'learning_rate': args.learning_rate,
+            'batch_size': batch_size,
+            'epochs': epochs,
+            'weight_decay': weight_decay,
+            'seed': 1,
+            'quick': args.quick,
             'parameters': sum(
                 p.numel() for p in model.parameters()
             ),
