@@ -26,6 +26,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+if __package__:
+    from .Evaluate_Classification import evaluate_predictions
+else:
+    from Evaluate_Classification import evaluate_predictions
+
 
 def get_device():
     if torch.cuda.is_available():
@@ -102,12 +107,8 @@ class Method_CNN_Base(nn.Module):
         return self._predict(test_set)[0]
 
     def evaluate(self, test_set):
-        from sklearn.metrics import accuracy_score, precision_recall_fscore_support
         pred_y, true_y = self._predict(test_set)
-        precision, recall, f1, _ = precision_recall_fscore_support(
-            true_y, pred_y, average='weighted', zero_division=0)
-        return {'accuracy': accuracy_score(true_y, pred_y),
-                'precision': precision, 'recall': recall, 'f1': f1}
+        return evaluate_predictions(true_y, pred_y)
 
     # plotting
     @staticmethod

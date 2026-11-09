@@ -3,7 +3,10 @@ import sys
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+if __package__:
+    from .Evaluate_Classification import evaluate_predictions
+else:
+    from Evaluate_Classification import evaluate_predictions
 from Method_Dataset_Loader import Dataset_ORL
 
 # reuse my plot function from stage 2
@@ -83,12 +86,11 @@ if __name__ == '__main__':
     pred_y = model.test_model(test_set)
     true_y = test_set.labels
 
-    accuracy = accuracy_score(true_y, pred_y)
-    precision, recall, f1, _ = precision_recall_fscore_support(true_y, pred_y, average='weighted', zero_division=0)
-    print('Accuracy:', accuracy)
-    print('Precision:', precision)
-    print('Recall:', recall)
-    print('F1:', f1)
+    scores = evaluate_predictions(true_y, pred_y)
+    print('Accuracy:', scores['accuracy'])
+    print('Precision:', scores['precision'])
+    print('Recall:', scores['recall'])
+    print('F1:', scores['f1'])
 
     # save the convergence plot
     result_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'result', 'stage_3_result')

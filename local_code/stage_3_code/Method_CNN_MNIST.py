@@ -3,7 +3,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+if __package__:
+    from .Evaluate_Classification import evaluate_predictions
+else:
+    from Evaluate_Classification import evaluate_predictions
 # import respective data loader
 from Method_Dataset_Loader import Dataset_MNIST 
 
@@ -108,11 +111,9 @@ with torch.no_grad():
 predictions = torch.cat(prediction_arr).numpy()
 true_labels = l_test.numpy()
 
-accuracy = accuracy_score(true_labels, predictions)
-precision, recall, f1, s = precision_recall_fscore_support(true_labels, predictions, average='weighted')
-print('')
-print('accuracy:', accuracy)
-print('precision:', precision)
-print('recall:', recall)
-print('f1:', f1)
+scores = evaluate_predictions(true_labels, predictions)
+print('Accuracy:', scores['accuracy'])
+print('Precision:', scores['precision'])
+print('Recall:', scores['recall'])
+print('F1:', scores['f1'])
 
