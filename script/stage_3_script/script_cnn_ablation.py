@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader, Subset
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from local_code.stage_3_code.Method_CNN_Base import Method_CNN_Base
 from local_code.stage_3_code.Evaluate_Classification import evaluate_predictions
 from local_code.stage_3_code.Method_Dataset_Loader import (
     Dataset_MNIST, Dataset_ORL, Dataset_CIFAR
@@ -35,7 +36,7 @@ SETTINGS = {
 VARIANTS = ['baseline', 'half_filters', 'kernel5']
 
 
-class CNN(nn.Module):
+class CNN(Method_CNN_Base):
     def __init__(self, dataset, variant, shape):
         super().__init__()
 

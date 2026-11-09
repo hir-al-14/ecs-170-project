@@ -30,6 +30,14 @@ class Stage3EvaluationTests(unittest.TestCase):
         self.assertEqual(set(train.indices) | set(validation.indices), set(range(100)))
         self.assertEqual(np.bincount(dataset.labels[validation.indices]).tolist(), [2] * 10)
 
+    def test_models_inherit_project_base_without_training_on_import(self):
+        from local_code.base_class.method import method
+        from local_code.stage_3_code.Method_CNN_MNIST import CNN_MNIST
+        from local_code.stage_3_code.Method_CNN_ORL import Method_CNN_ORL
+        from local_code.stage_3_code.Method_CNN_CIFAR import Method_CNN_CIFAR
+        for model_class in [CNN_MNIST, Method_CNN_ORL, Method_CNN_CIFAR, CNN]:
+            self.assertTrue(issubclass(model_class, method))
+
     def test_baseline_model_output_shapes(self):
         for name, shape, classes in [('mnist', (1, 28, 28), 10),
                                      ('orl', (1, 112, 92), 40),

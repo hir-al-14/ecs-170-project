@@ -21,6 +21,11 @@ Subclasses define two attributes in __init__:
 """
 
 import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from local_code.base_class.method import method
 import numpy as np
 import torch
 import torch.nn as nn
@@ -40,7 +45,7 @@ def get_device():
     return torch.device('cpu')
 
 
-class Method_CNN_Base(nn.Module):
+class Method_CNN_Base(nn.Module, method):
     # defaults, overridable per subclass (same names as Method_CNN_ORL.py)
     learning_rate = 0.001
     batch_size = 64
@@ -49,9 +54,16 @@ class Method_CNN_Base(nn.Module):
 
     def __init__(self):
         super().__init__()
+        method.__init__(self, type(self).__name__, "Stage 3 CNN")
         self.device = get_device()
         self.loss_history = []   # mean training loss per epoch
         self.acc_history = []    # training accuracy per epoch
+
+    def run(self, train_set, test_set):
+        """Train on a Dataset and return predictions with their true labels."""
+        self.train_model(train_set)
+        pred_y, true_y = self._predict(test_set)
+        return {'pred_y': pred_y, 'true_y': true_y}
 
     def forward(self, x):
         return self.fc_layers(self.conv_layers(x))

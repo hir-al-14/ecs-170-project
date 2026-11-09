@@ -7,14 +7,19 @@ if __package__:
     from .Evaluate_Classification import evaluate_predictions
 else:
     from Evaluate_Classification import evaluate_predictions
-from Method_Dataset_Loader import Dataset_ORL
+if __package__:
+    from .Method_CNN_Base import Method_CNN_Base
+    from .Method_Dataset_Loader import Dataset_ORL
+else:
+    from Method_CNN_Base import Method_CNN_Base
+    from Method_Dataset_Loader import Dataset_ORL
 
 # reuse my plot function from stage 2
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'stage_2_code'))
 from plot_utils import plot_learning_curve
 
 
-class Method_CNN_ORL(nn.Module):
+class Method_CNN_ORL(Method_CNN_Base):
     learning_rate = 0.001
     batch_size = 16
     max_epoch = 30

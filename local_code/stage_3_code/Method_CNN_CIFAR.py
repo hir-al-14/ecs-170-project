@@ -1,7 +1,11 @@
 import torch
 import torch.nn as nn
-from Method_Dataset_Loader import Dataset_CIFAR
-from Method_CNN_Base import Method_CNN_Base
+if __package__:
+    from .Method_Dataset_Loader import Dataset_CIFAR
+    from .Method_CNN_Base import Method_CNN_Base
+else:
+    from Method_Dataset_Loader import Dataset_CIFAR
+    from Method_CNN_Base import Method_CNN_Base
 
 
 def conv_block(in_c, out_c):
