@@ -1,5 +1,8 @@
-
 from pathlib import Path
+from local_code.stage_4_code.Config import (
+    CLASSIFICATION_DIR,
+    GENERATION_DIR
+)
 
 class Stage4DatasetLoader:
 
