@@ -23,4 +23,4 @@ class RNNClassifier(nn.Module):
         h = h[-1]                            
         h = self.dropout(h)
         # return 2 raw scores
-        return self.fc(h) 
+        return self.fc(h)
