@@ -39,4 +39,69 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False, collat
 # glove setting
 glove_weights, matched = load_glove_matrix(get_glove_path(EMBEDDING_DIM), vocab, embedding_dim=EMBEDDING_DIM)
 
+# model
+model = RNNClassifier(glove_weights, hidden_size=HIDDEN_SIZE, dropout=DROPOUT).to(device)
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+def evaluate(loader):
+    model.eval()
+    total_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for x, lengths, y in loader:
+            x = x.to(device)
+            y = y.to(device)
+            output = model(x, lengths)
+            loss = loss_fn(output, y)
+            total_loss += loss.item() * len(y)
+            correct += (output.argmax(dim=1) == y).sum().item()
+            total += len(y)
+    return total_loss / total, correct / total
+
+# training
+train_loss_list = []
+train_acc_list = []
+test_loss_list = []
+test_acc_list = []
+
+for epoch in range(EPOCHS):
+    model.train()
+    total_loss = 0
+    correct = 0
+    total = 0
+
+    for x, lengths, y in train_loader:
+        x = x.to(device)
+        y = y.to(device)
+
+        optimizer.zero_grad()
+        output = model(x, lengths)
+        loss = loss_fn(output, y)
+        loss.backward()
+        # keep gradient stable
+        nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+
+        total_loss += loss.item() * len(y)
+        correct += (output.argmax(dim=1) == y).sum().item()
+        total += len(y)
+
+    train_loss = total_loss / total
+    train_acc = correct / total
+    test_loss, test_acc = evaluate(test_loader)
+
+    train_loss_list.append(train_loss)
+    train_acc_list.append(train_acc)
+    test_loss_list.append(test_loss)
+    test_acc_list.append(test_acc)
+    # display
+    print("epoch %d : train loss %.4f, accuracy %.4f ; test loss %.4f, accuracy %.4f" % (epoch + 1, train_loss, train_acc, test_loss, test_acc))
+
+# save res
+his = {"train_loss": train_loss_list,"train_acc": train_acc_list,"test_loss": test_loss_list,"test_acc": test_acc_list}
+with open("classification_training_log.json", "w") as f:
+    json.dump(his, f)
+# save model
+torch.save(model.state_dict(), "rnn_classification.pt")
