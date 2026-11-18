@@ -7,14 +7,14 @@ from torch.utils.data import DataLoader
 from local_code.stage_4_code.Dataset_Loader import Stage4DatasetLoader
 from local_code.stage_4_code.Text_Preprocessor import (build_vocab, ReviewDataset, collate_reviews, load_glove_matrix)
 from local_code.stage_4_code.Method_RNN_Classification import RNNClassifier
-from local_code.stage_4_code.Config import (EMBEDDING_DIM, HIDDEN_DIM, BATCH_SIZE, LEARNING_RATE,MAX_EPOCHS, MAX_SEQUENCE_LENGTH, get_glove_path)
+from local_code.stage_4_code.Config import (EMBEDDING_DIM, HIDDEN_DIM, BATCH_SIZE, LEARNING_RATE, MAX_EPOCHS, MAX_SEQUENCE_LENGTH, get_glove_path)
 # setting
 MAX_LEN = MAX_SEQUENCE_LENGTH
 EPOCHS = MAX_EPOCHS
 HIDDEN_SIZE = HIDDEN_DIM
 MAX_VOCAB = 15000
 DROPOUT = 0.4
-
+LEARNING_RATE = 0.0005
 # use cuda if possible
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -27,6 +27,7 @@ train_texts = data["train"]["X"]
 train_labels = data["train"]["y"]
 test_texts = data["test"]["X"]
 test_labels = data["test"]["y"]
+print("train reviews:", len(train_texts), "test reviews:", len(test_texts))
 # vocab from training
 vocab = build_vocab(train_texts, max_vocab_size=MAX_VOCAB)
 print("vocab sz:", len(vocab))
@@ -40,7 +41,7 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False, collat
 glove_weights, matched = load_glove_matrix(get_glove_path(EMBEDDING_DIM), vocab, embedding_dim=EMBEDDING_DIM)
 
 # model
-model = RNNClassifier(glove_weights, hidden_size=HIDDEN_SIZE, dropout=DROPOUT).to(device)
+model = RNNClassifier(glove_weights, hidden_SZ=HIDDEN_SIZE, dropout=DROPOUT).to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
