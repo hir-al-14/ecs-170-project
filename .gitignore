@@ -185,3 +185,5 @@ fabric.properties
 .DS_Store
 
 *:Zone.Identifier
+
+__pycache__/
