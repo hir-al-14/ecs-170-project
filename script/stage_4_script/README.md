@@ -71,3 +71,15 @@ Read samples to assess coherence, grammar, repetition, and joke structure.
 Only add `--evaluate-test` for final evaluation after selecting settings on
 validation data. Test loss/perplexity uses the training vocabulary, including
 UNK for unseen words. Keep tokenization and vocabulary fixed across comparisons.
+
+Generate another sample from a saved checkpoint without training:
+
+```bash
+.venv/bin/python -m script.stage_4_script.generate_text result/stage_4_result/generation/rnn_baseline/best.pt --prompt "what did the"
+```
+
+Run all Stage 4 checks:
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_stage4*.py'
+```

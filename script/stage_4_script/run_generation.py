@@ -45,12 +45,16 @@ def run_epoch(model, loader, device, optimizer=None):
 
 
 def generate(model, vocab, prompt, context_length, max_tokens, temperature, seed):
+    if context_length < 1 or max_tokens < 1:
+        raise ValueError("Context length and maximum tokens must be positive")
+    if not math.isfinite(temperature) or temperature <= 0:
+        raise ValueError("Temperature must be finite and positive")
     ids = encode_prompt(prompt, vocab)
     if UNK_ID in ids:
         raise ValueError("Choose three prompt words present in the training vocabulary")
     device = next(model.parameters()).device
-    random = torch.Generator(device=device).manual_seed(seed)
-    inverse = {index: token for token, index in vocab.items()}
+    generator = torch.Generator(device=device).manual_seed(seed)
+    id_to_token = {index: token for token, index in vocab.items()}
     model.eval()
     ended = False
     with torch.inference_mode():
@@ -59,13 +63,20 @@ def generate(model, vocab, prompt, context_length, max_tokens, temperature, seed
             x = torch.tensor([context], dtype=torch.long, device=device)
             logits = model(x, torch.tensor([len(context)]))[0] / temperature
             logits[[PAD_ID, UNK_ID, BOS_ID]] = -torch.inf
-            next_id = torch.multinomial(logits.softmax(dim=0), 1, generator=random).item()
+            next_id = torch.multinomial(
+                logits.softmax(dim=0), 1, generator=generator
+            ).item()
             ids.append(next_id)
             if next_id == EOS_ID:
                 ended = True
                 break
-    return {"prompt": prompt, "text": detokenize([inverse[i] for i in ids]),
-            "ended_with_eos": ended, "seed": seed, "temperature": temperature}
+    return {
+        "prompt": prompt,
+        "text": detokenize([id_to_token[i] for i in ids]),
+        "ended_with_eos": ended,
+        "seed": seed,
+        "temperature": temperature,
+    }
 
 
 def main():
