@@ -83,3 +83,42 @@ Run all Stage 4 checks:
 ```bash
 .venv/bin/python -m unittest discover -s tests -p 'test_stage4*.py'
 ```
+
+## Classification tuning
+
+Start with a validation baseline (uses the existing classifier architecture):
+
+```bash
+.venv/bin/python -m script.stage_4_script.tune_classification --output result/stage_4_result/classification_tuning/baseline_01 --plan baseline
+```
+
+Run seven experiments varying one of learning rate, batch size, or dropout:
+
+```bash
+.venv/bin/python -m script.stage_4_script.tune_classification --output result/stage_4_result/classification_tuning/sweep_01
+```
+
+This can take substantial time on CPU. `--device cuda` uses CUDA when available.
+`--plan grid` runs all 27 combinations instead. Use a fresh output directory.
+The 25,000 provided training reviews are split into 20,000 training and 5,000
+validation reviews with stratification and seed 42. Vocabulary is built only
+from those 20,000 reviews. GloVe is loaded once; each run receives independent
+copies of the initial weights. Original baseline files are left intact.
+
+Runs save training/validation losses and accuracies, full validation metrics,
+settings, and best-validation-loss checkpoints with vocabulary. Early stopping
+uses three epochs without validation-loss improvement. `summary.csv` compares
+runs and `best_run.json` identifies the smallest validation loss. Use these
+outputs for the hyperparameter table and Doga's convergence plots.
+This validation baseline uses less training data than the original model, so
+its scores are not directly comparable to the original test accuracy.
+
+Only after selecting settings on validation data, evaluate the chosen model:
+
+```bash
+.venv/bin/python -m script.stage_4_script.evaluate_tuned_classification result/stage_4_result/classification_tuning/sweep_01/run_01/best.pt
+```
+
+Replace `run_01` with the selected run in `best_run.json`. Results are saved as
+`test_metrics.json` beside that checkpoint. Do not use test results to select
+further hyperparameters. Improvement over the original 80.28% is not guaranteed.
