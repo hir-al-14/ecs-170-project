@@ -5,6 +5,7 @@ import csv
 import itertools
 import json
 import math
+import shutil
 from pathlib import Path
 
 import torch
@@ -122,6 +123,7 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--plan", choices=["baseline", "one-factor", "grid"], default="one-factor")
+    parser.add_argument("--baseline-from", type=Path, help="Reuse a completed baseline directory")
     args = parser.parse_args()
     if args.epochs < 1 or args.patience < 1:
         parser.error("Epochs and patience must be positive")
@@ -143,11 +145,29 @@ def main():
              "index_order": "Dataset_Loader sorted filenames, negative then positive",
              "vocab_size": len(vocab), "glove_matches": matched}
     (args.output / "split.json").write_text(json.dumps(split, indent=2))
+    baseline = None
+    if args.baseline_from:
+        baseline = json.loads((args.baseline_from / "best_run.json").read_text())
+        old_split = json.loads((args.baseline_from / "split.json").read_text())
+        checkpoint = torch.load(args.baseline_from / baseline["run"] / "best.pt",
+                                map_location="cpu", weights_only=True)
+        if old_split != split or checkpoint["vocab"] != vocab:
+            parser.error("Baseline split or vocabulary does not match this experiment")
+        expected = (BASELINE[0], BASELINE[1], BASELINE[2], args.seed, args.epochs, args.patience)
+        actual = tuple(baseline[key] for key in
+                       ("learning_rate", "batch_size", "dropout", "seed", "max_epochs", "patience"))
+        if actual != expected or args.plan == "grid":
+            parser.error("Baseline settings must match; reuse supports baseline or one-factor plans")
     settings = [BASELINE] if args.plan == "baseline" else experiment_settings(args.plan == "grid")
     rows = []
     for index, setting in enumerate(settings, start=1):
-        result = train_experiment(train, validation, weights, vocab, setting, args,
-                                  args.output / f"run_{index:02d}")
+        if baseline is not None and setting == BASELINE:
+            shutil.copytree(args.baseline_from / baseline["run"], args.output / "run_01")
+            result = {**baseline, "run": "run_01"}
+            print("Reusing completed baseline", flush=True)
+        else:
+            result = train_experiment(train, validation, weights, vocab, setting, args,
+                                      args.output / f"run_{index:02d}")
         rows.append(result)
         with (args.output / "summary.csv").open("w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=list(rows[0]))
