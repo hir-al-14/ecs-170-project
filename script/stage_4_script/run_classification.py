@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 # import modules
+from local_code.stage_4_code.evaluate_classification import evaluate_classification
 from local_code.stage_4_code.Dataset_Loader import Stage4DatasetLoader
 from local_code.stage_4_code.Text_Preprocessor import (build_vocab, ReviewDataset, collate_reviews, load_glove_matrix)
 from local_code.stage_4_code.Method_RNN_Classification import RNNClassifier
@@ -101,8 +102,24 @@ for epoch in range(EPOCHS):
     print("epoch %d : train loss %.4f, accuracy %.4f ; test loss %.4f, accuracy %.4f" % (epoch + 1, train_loss, train_acc, test_loss, test_acc))
 
 # save res
+from pathlib import Path
+result_dir = Path(__file__).resolve().parents[2] / "result" / "stage_4_result"
+result_dir.mkdir(parents=True, exist_ok=True)
 his = {"train_loss": train_loss_list,"train_acc": train_acc_list,"test_loss": test_loss_list,"test_acc": test_acc_list}
-with open("classification_training_log.json", "w") as f:
+with open(result_dir / "classification_training_log.json", "w") as f:
     json.dump(his, f)
 # save model
-torch.save(model.state_dict(), "rnn_classification.pt")
+torch.save(model.state_dict(), result_dir / "rnn_classification.pt")
+
+# Use the shared evaluator for the final trained classifier.
+y_true, y_pred = [], []
+model.eval()
+with torch.inference_mode():
+    for x, lengths, y in test_loader:
+        predictions = model(x.to(device), lengths).argmax(dim=1)
+        y_true.extend(y.tolist())
+        y_pred.extend(predictions.cpu().tolist())
+metrics = evaluate_classification(y_true, y_pred)
+with open(result_dir / "rnn_classification_metrics.json", "w") as f:
+    json.dump(metrics, f, indent=2)
+print("Final classification metrics:", metrics)
