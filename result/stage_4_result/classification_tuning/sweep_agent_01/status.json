@@ -1,0 +1,13 @@
+{
+  "status": "interrupted",
+  "reason": "Prioritize instructor requirements: 85% classification accuracy and readable generation",
+  "completed_runs": [
+    "run_01",
+    "run_02",
+    "run_03"
+  ],
+  "incomplete_runs": [
+    "run_04"
+  ],
+  "test_set_used": false
+}
