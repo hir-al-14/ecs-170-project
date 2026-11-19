@@ -1,0 +1,16 @@
+{
+  "run": "run_01",
+  "learning_rate": 0.0005,
+  "batch_size": 32,
+  "dropout": 0.4,
+  "hidden_dim": 128,
+  "embedding_dim": 50,
+  "max_length": 200,
+  "seed": 42,
+  "max_epochs": 10,
+  "patience": 3,
+  "best_epoch": 4,
+  "validation_loss": 0.46486034116744995,
+  "validation_accuracy": 0.7992,
+  "validation_macro_f1": 0.7987592344256084
+}
