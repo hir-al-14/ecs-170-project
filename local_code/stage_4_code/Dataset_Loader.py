@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from local_code.stage_4_code.Config import (
     CLASSIFICATION_DIR,
@@ -65,31 +66,25 @@ class Stage4DatasetLoader:
         return dataset
 
     def load_generation(self):
+        """Read the instructor's CSV into individual jokes (not token windows).
+
+        The supplied file is named ``data`` without a .csv extension.
+        csv.DictReader preserves quoted commas and multiline joke fields.
         """
-        Load text files used for joke generation.
-        """
+        if not self.generation_dir.is_file():
+            raise FileNotFoundError(self.generation_dir)
 
-        if not self.generation_dir.is_dir():
-            raise FileNotFoundError(
-                self.generation_dir
-            )
-
-        files = sorted(
-            self.generation_dir.rglob("*.txt")
-        )
-
-        if not files:
-            raise FileNotFoundError(
-                "No .txt files found in "
-                f"{self.generation_dir}"
-            )
-
-        texts = []
-
-        for file in files:
-            content = file.read_text(
-                encoding="utf-8"
-            )
-            texts.append(content)
-
-        return texts
+        with self.generation_dir.open(encoding="utf-8-sig", newline="") as file:
+            reader = csv.DictReader(file, strict=True)
+            if not reader.fieldnames or "Joke" not in reader.fieldnames:
+                raise ValueError("Generation CSV must contain a Joke column")
+            jokes = []
+            for row_number, row in enumerate(reader, start=2):
+                if None in row or row["Joke"] is None:
+                    raise ValueError(f"Malformed generation CSV record {row_number}")
+                joke = row["Joke"].strip()
+                if joke:
+                    jokes.append(joke)
+        if not jokes:
+            raise ValueError("Generation CSV contains no nonempty jokes")
+        return jokes
