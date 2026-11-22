@@ -1,0 +1,8 @@
+{
+  "prompt": "what did the",
+  "text": "what did the green bears say to the other? he was job on to work.",
+  "ended_with_eos": true,
+  "seed": 42,
+  "temperature": 0.8,
+  "exact_training_match": false
+}
