@@ -1,5 +1,6 @@
 # import package
 import json
+import argparse
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -10,6 +11,15 @@ from local_code.stage_4_code.Text_Preprocessor import (build_vocab, ReviewDatase
 from local_code.stage_4_code.Method_RNN_Classification import RNNClassifier
 from local_code.stage_4_code.Config import (EMBEDDING_DIM, HIDDEN_DIM, BATCH_SIZE, LEARNING_RATE, MAX_EPOCHS, MAX_SEQUENCE_LENGTH, get_glove_path)
 # setting
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--cell",
+    choices=["rnn", "lstm", "gru"],
+    default="rnn"
+)
+args = parser.parse_args()
+torch.manual_seed(42)
+
 MAX_LEN = MAX_SEQUENCE_LENGTH
 EPOCHS = MAX_EPOCHS
 HIDDEN_SIZE = HIDDEN_DIM
@@ -41,8 +51,17 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False, collat
 # glove setting
 glove_weights, matched = load_glove_matrix(get_glove_path(EMBEDDING_DIM), vocab, embedding_dim=EMBEDDING_DIM)
 
+# check GloVe data
+if matched == 0:
+    raise RuntimeError("GloVe embeddings are missing.")
+
 # model
-model = RNNClassifier(glove_weights, hidden_SZ=HIDDEN_SIZE, dropout=DROPOUT).to(device)
+model = RNNClassifier(
+    glove_weights,
+    hidden_SZ=HIDDEN_SIZE,
+    dropout=DROPOUT,
+    cell_type=args.cell
+).to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
@@ -101,25 +120,46 @@ for epoch in range(EPOCHS):
     # display
     print("epoch %d : train loss %.4f, accuracy %.4f ; test loss %.4f, accuracy %.4f" % (epoch + 1, train_loss, train_acc, test_loss, test_acc))
 
-# save res
+
+# Save results
 from pathlib import Path
+
 result_dir = Path(__file__).resolve().parents[2] / "result" / "stage_4_result"
 result_dir.mkdir(parents=True, exist_ok=True)
-his = {"train_loss": train_loss_list,"train_acc": train_acc_list,"test_loss": test_loss_list,"test_acc": test_acc_list}
-with open(result_dir / "classification_training_log.json", "w") as f:
-    json.dump(his, f)
-# save model
-torch.save(model.state_dict(), result_dir / "rnn_classification.pt")
 
-# Use the shared evaluator for the final trained classifier.
+prefix = f"{args.cell}_classification"
+
+# Save training history
+his = {
+    "train_loss": train_loss_list,
+    "train_acc": train_acc_list,
+    "test_loss": test_loss_list,
+    "test_acc": test_acc_list
+}
+
+with open(result_dir / f"{prefix}_training_log.json", "w") as f:
+    json.dump(his, f, indent=2)
+
+# Save model
+torch.save(model.state_dict(), result_dir / f"{prefix}.pt")
+
+# Final evaluation
 y_true, y_pred = [], []
 model.eval()
+
 with torch.inference_mode():
     for x, lengths, y in test_loader:
-        predictions = model(x.to(device), lengths).argmax(dim=1)
+        predictions = model(
+            x.to(device), lengths
+        ).argmax(dim=1)
+
         y_true.extend(y.tolist())
         y_pred.extend(predictions.cpu().tolist())
+
 metrics = evaluate_classification(y_true, y_pred)
-with open(result_dir / "rnn_classification_metrics.json", "w") as f:
+
+with open(result_dir / f"{prefix}_metrics.json", "w") as f:
     json.dump(metrics, f, indent=2)
+
+print("Model:", args.cell)
 print("Final classification metrics:", metrics)
