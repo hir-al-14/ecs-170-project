@@ -1,5 +1,6 @@
-"""Evaluate the saved Stage 4 RNN classifier without retraining."""
+"""Evaluate the team's saved classifiers without retraining."""
 
+import argparse
 import json
 from pathlib import Path
 
@@ -18,10 +19,30 @@ from local_code.stage_4_code.Text_Preprocessor import (
 )
 
 
+def load_classifier(state_dict, cell_type):
+    # The recurrent input weights contain one block per gate.
+    gates = {"rnn": 1, "lstm": 4, "gru": 3}[cell_type]
+    hidden_size = state_dict["rnn.weight_hh_l0"].shape[0] // gates
+    model = RNNClassifier(
+        state_dict["embedding.weight"],
+        hidden_SZ=hidden_size,
+        dropout=0.4,
+        cell_type=cell_type,
+    )
+    model.load_state_dict(state_dict)
+    return model.eval()
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cell", choices=["rnn", "lstm", "gru"], default="rnn")
+    parser.add_argument("--output-dir", type=Path,
+                        help="Override the default result directory")
+    args = parser.parse_args()
     project_root = Path(__file__).resolve().parents[2]
     result_dir = project_root / "result" / "stage_4_result"
-    checkpoint_path = result_dir / "rnn_classification.pt"
+    checkpoint_path = result_dir / f"{args.cell}_classification.pt"
+    output_dir = args.output_dir if args.output_dir else result_dir
 
     # CPU works even when the checkpoint was trained on CUDA.
     device = torch.device("cpu")
@@ -54,21 +75,13 @@ def main():
         weights_only=True,
     )
 
-    # The checkpoint already contains the trained embedding weights.
-    # There is no need to read the large GloVe file again.
-    model = RNNClassifier(
-        state_dict["embedding.weight"],
-        hidden_SZ=state_dict["rnn.weight_hh_l0"].shape[1],
-        dropout=0.4,
-    ).to(device)
-
-    model.load_state_dict(state_dict)
-    model.eval()
+    # Embeddings are already saved in the checkpoint; no GloVe reload needed.
+    model = load_classifier(state_dict, args.cell).to(device)
 
     y_true = []
     y_pred = []
 
-    print(f"Evaluating {len(test_dataset):,} test reviews...")
+    print(f"Evaluating {args.cell.upper()} on {len(test_dataset):,} test reviews...", flush=True)
 
     with torch.inference_mode():
         for token_ids, lengths, labels in test_loader:
@@ -80,10 +93,10 @@ def main():
 
     metrics = evaluate_classification(y_true, y_pred)
 
-    result_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    metrics_path = result_dir / "rnn_classification_metrics.json"
-    predictions_path = result_dir / "rnn_classification_predictions.json"
+    metrics_path = output_dir / f"{args.cell}_classification_metrics.json"
+    predictions_path = output_dir / f"{args.cell}_classification_predictions.json"
 
     metrics_path.write_text(
         json.dumps(metrics, indent=2),

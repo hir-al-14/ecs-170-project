@@ -1,4 +1,50 @@
-# Stage 4 classification evaluation
+# Stage 4 team workflow
+
+The shared classifier and training command now support RNN, LSTM, and GRU.
+Evaluation reuses those implementations; no separate classifier is introduced.
+The original training runs use the provided train/test split. Hiral's tuning
+runs use a held-out validation split and must be reported separately.
+
+## Evaluate the team's classifiers
+
+Run these from the repository root; evaluation loads saved weights, not GloVe:
+
+```bash
+.venv/bin/python -m script.stage_4_script.run_evaluation --cell rnn
+.venv/bin/python -m script.stage_4_script.run_evaluation --cell lstm
+.venv/bin/python -m script.stage_4_script.run_evaluation --cell gru
+```
+
+Each writes its own `<cell>_classification_metrics.json` and predictions.
+Use `--output-dir /tmp/stage4-evaluation` to verify results without replacing
+existing result files. The legacy evaluation module entry points still work.
+Classifier checkpoints contain weights only, so evaluation reconstructs the
+15,000-token vocabulary from the unchanged full training set, exactly as the
+team training script does. Tuning checkpoints instead save their own vocabulary.
+
+## Collect report tables and generation examples
+
+```bash
+.venv/bin/python -m script.stage_4_script.summarize_results
+```
+
+Writes `summary/classification_test.csv` and `summary/generation_validation.csv`.
+These collect saved results without retraining. Generated examples still need
+manual review for coherence, grammar, repetition, and copying. A lower loss
+alone does not satisfy the instructor's readable-generation requirement.
+The saved LSTM classifier reports 85.40% test accuracy, above the 85% minimum.
+
+Doga's existing generation plot command is:
+
+```bash
+.venv/bin/python -m local_code.stage_4_code.plot_generation_curve
+```
+
+It reads `generation/rnn_review_baseline/history.json`. Other generator and
+tuning histories are saved beside their checkpoints for additional plots.
+
+## Classification evaluation details
+
 
 Run from the repository root with the existing project environment:
 
@@ -21,8 +67,7 @@ Outputs under `result/stage_4_result/`:
 checkpoint, history, and metrics to this result directory. Running that training
 script overwrites the baseline files. Use the evaluation command above to evaluate
 without training. Legacy module entry points under `local_code.stage_4_code`
-remain supported. LSTM/GRU can reuse the metrics function with their predictions;
-the checkpoint-loading script currently supports the existing RNN architecture.
+remain supported. All three cell types use the same metrics function and checkpoint evaluation command.
 
 Check metric calculations:
 
@@ -122,3 +167,23 @@ Only after selecting settings on validation data, evaluate the chosen model:
 Replace `run_01` with the selected run in `best_run.json`. Results are saved as
 `test_metrics.json` beside that checkpoint. Do not use test results to select
 further hyperparameters. Improvement over the original 80.28% is not guaranteed.
+
+
+## Existing classification tuning results
+
+- `classification_tuning/baseline_agent_01/`: completed validation baseline.
+- `classification_tuning/sweep_agent_01/summary.csv`: baseline and two completed
+  learning-rate comparisons. Best completed validation accuracy is 80.56%.
+- `classification_tuning/sweep_agent_01/status.json`: records the interrupted
+  sweep. Batch-size/dropout comparisons are not complete. These validation
+  results must not be described as test scores or a finished seven-run sweep.
+
+To reuse the completed baseline in a new sweep:
+
+```bash
+.venv/bin/python -m script.stage_4_script.tune_classification --output result/stage_4_result/classification_tuning/sweep_new --baseline-from result/stage_4_result/classification_tuning/baseline_agent_01
+```
+
+Reuse checks split indices, vocabulary, and training settings. It reuses only
+the baseline; it does not resume partially completed non-baseline runs.
+Older incomplete local folders are not part of the shared results.
