@@ -187,3 +187,36 @@ To reuse the completed baseline in a new sweep:
 Reuse checks split indices, vocabulary, and training settings. It reuses only
 the baseline; it does not resume partially completed non-baseline runs.
 Older incomplete local folders are not part of the shared results.
+
+## Readable-generation demonstration
+
+The original baseline is retained. The separate `rnn_glove_readability_01`
+experiment uses GloVe initialization, 256 hidden units, a 64-token context,
+dropout 0.2, and 40 epochs. `best.pt` still means minimum validation loss;
+`last.pt` is the final model, kept separately for qualitative comparison.
+The final model produces readable examples but memorizes training text and
+still fails on some prompts. Do not describe its validation overfitting as fixed.
+
+Run an actual terminal demonstration suitable for capturing a screenshot:
+
+```bash
+.venv/bin/python -m script.stage_4_script.generate_text result/stage_4_result/generation/rnn_glove_readability_01/last.pt --prompt "why did the" --temperature 0.4 --top-k 3 --seed 42 --plain --compare-training
+```
+
+This prints the checkpoint epoch and sampling settings, generated text, and
+training-text overlap. The saved example is an exact training match; the
+screenshot should retain that fact. No response text is hardcoded or retrieved
+from the dataset during sampling; the training comparison runs afterward.
+
+Review a fixed panel of three prompts and three seeds:
+
+```bash
+.venv/bin/python -m script.stage_4_script.review_generation result/stage_4_result/generation/rnn_glove_readability_01/last.pt --temperature 0.4 --top-k 3 --output /tmp/stage4-generation-review.json
+```
+
+The review command records all outputs, exact matches, and longest contiguous
+training-token matches. Its manual-review fields start empty for a reviewer to
+fill. Saved `review_last.json` includes qualitative observations and failures;
+`review_best.json` and `review_additional.json` preserve other sampled outputs.
+Perplexity alone and absence of an exact match are not evidence of coherent,
+original writing. Training loss histories remain available for Doga's plots.

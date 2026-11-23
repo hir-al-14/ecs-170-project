@@ -11,9 +11,10 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from local_code.stage_4_code.Method_RNN_Generation import RNNGenerator
+from local_code.stage_4_code.Config import get_glove_path
 from local_code.stage_4_code.Text_Preprocessor import (
     BOS_ID, EOS_ID, PAD_ID, UNK_ID, JokeDataset, collate_jokes,
-    detokenize, encode_prompt, tokenize,
+    detokenize, encode_prompt, tokenize, load_glove_matrix,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,11 +45,13 @@ def run_epoch(model, loader, device, optimizer=None):
     return total_loss / total
 
 
-def generate(model, vocab, prompt, context_length, max_tokens, temperature, seed):
+def generate(model, vocab, prompt, context_length, max_tokens, temperature, seed, top_k=0):
     if context_length < 1 or max_tokens < 1:
         raise ValueError("Context length and maximum tokens must be positive")
     if not math.isfinite(temperature) or temperature <= 0:
         raise ValueError("Temperature must be finite and positive")
+    if top_k < 0:
+        raise ValueError("top_k must be nonnegative")
     ids = encode_prompt(prompt, vocab)
     if UNK_ID in ids:
         raise ValueError("Choose three prompt words present in the training vocabulary")
@@ -63,6 +66,11 @@ def generate(model, vocab, prompt, context_length, max_tokens, temperature, seed
             x = torch.tensor([context], dtype=torch.long, device=device)
             logits = model(x, torch.tensor([len(context)]))[0] / temperature
             logits[[PAD_ID, UNK_ID, BOS_ID]] = -torch.inf
+            if top_k:
+                values, indices = logits.topk(min(top_k, len(vocab) - 3))
+                filtered = torch.full_like(logits, -torch.inf)
+                filtered[indices] = values
+                logits = filtered
             next_id = torch.multinomial(
                 logits.softmax(dim=0), 1, generator=generator
             ).item()
@@ -76,6 +84,7 @@ def generate(model, vocab, prompt, context_length, max_tokens, temperature, seed
         "ended_with_eos": ended,
         "seed": seed,
         "temperature": temperature,
+        "top_k": top_k,
     }
 
 
@@ -97,6 +106,8 @@ def main():
     parser.add_argument("--max-tokens", type=int, default=60)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--evaluate-test", action="store_true", help="Only use after selecting settings on validation data")
+    parser.add_argument("--glove", action="store_true", help="Initialize embeddings with the supplied GloVe file")
+    parser.add_argument("--top-k", type=int, default=0, help="Sample from the k most likely tokens; 0 uses all tokens")
     args = parser.parse_args()
     if min(args.epochs, args.batch_size, args.hidden_dim, args.embedding_dim,
            args.context_length, args.max_tokens) < 1:
@@ -107,6 +118,8 @@ def main():
         parser.error("Temperature must be finite and positive")
     if not 0 <= args.dropout < 1:
         parser.error("Dropout must be between 0 (inclusive) and 1 (exclusive)")
+    if args.top_k < 0:
+        parser.error("top-k must be nonnegative")
     raw = args.data.read_bytes()
     prepared = json.loads(raw)
     vocab = prepared["vocab"]
@@ -118,6 +131,13 @@ def main():
     model_config = dict(vocab_size=len(vocab), embedding_dim=args.embedding_dim,
                         hidden_dim=args.hidden_dim, dropout=args.dropout, cell_type=args.cell)
     model = RNNGenerator(**model_config).to(device)
+    if args.glove:
+        print("Loading GloVe embeddings...", flush=True)
+        weights, matched = load_glove_matrix(get_glove_path(args.embedding_dim), vocab,
+                                             args.embedding_dim, seed=args.seed)
+        with torch.no_grad():
+            model.embedding.weight.copy_(weights.to(device))
+        print(f"GloVe coverage: {matched}/{len(vocab)} vocabulary entries", flush=True)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     loaders = {}
     for name in ("train", "validation"):
@@ -147,6 +167,15 @@ def main():
                         "experiment": config}, args.output / "best.pt")
         (args.output / "history.json").write_text(json.dumps(history, indent=2))
         print(f"Epoch {epoch}: train loss {train_loss:.4f}, validation loss {validation_loss:.4f}", flush=True)
+    # Keep the final model as well as the minimum-loss model so qualitative
+    # comparisons do not require retraining or silently replacing best.pt.
+    torch.save({"model_state": model.state_dict(), "model_config": model_config,
+                "vocab": vocab, "context_length": args.context_length,
+                "epoch": epoch, "validation_loss": validation_loss,
+                "experiment": config}, args.output / "last.pt")
+    final_sample = generate(model, vocab, args.prompt, args.context_length,
+                            args.max_tokens, args.temperature, args.seed, args.top_k)
+    (args.output / "sample_last.json").write_text(json.dumps(final_sample, indent=2))
     checkpoint = torch.load(args.output / "best.pt", map_location=device, weights_only=True)
     model.load_state_dict(checkpoint["model_state"])
     results = {"best_epoch": best_epoch, "validation_loss": best_loss,
@@ -157,7 +186,7 @@ def main():
         test_loss = run_epoch(model, loader, device)
         results.update(test_loss=test_loss, test_perplexity=math.exp(min(test_loss, 700)))
     sample = generate(model, vocab, args.prompt, args.context_length,
-                      args.max_tokens, args.temperature, args.seed)
+                      args.max_tokens, args.temperature, args.seed, args.top_k)
     training_tokens = {tuple(tokenize(text)) for text in prepared["splits"]["train"]}
     sample["exact_training_match"] = tuple(tokenize(sample["text"])) in training_tokens
     (args.output / "metrics.json").write_text(json.dumps(results, indent=2))

@@ -46,6 +46,26 @@ class GenerationModelTests(unittest.TestCase):
         run_epoch(model, loader, torch.device("cpu"))
         torch.testing.assert_close(before, model.output.weight)
 
+    def test_top_k_and_training_overlap(self):
+        from script.stage_4_script.review_generation import compare_training_text
+        model = RNNGenerator(len(self.vocab), hidden_dim=8)
+        with torch.no_grad():
+            model.output.weight.zero_()
+            model.output.bias.zero_()
+            model.output.bias[0] = 200  # Padding must never be sampled.
+            model.output.bias[3] = 100
+        sample = generate(model, self.vocab, "what did the", 20, 5, 0.8, 42, top_k=1)
+        self.assertTrue(sample["ended_with_eos"])
+        self.assertEqual(sample["text"], "what did the")
+        with self.assertRaises(ValueError):
+            generate(model, self.vocab, "what did the", 20, 5, 0.8, 42, top_k=-1)
+        result = compare_training_text("The cat sat.", ["The cat sat.", "Another example."])
+        self.assertTrue(result["exact_training_match"])
+        self.assertEqual(result["longest_training_token_match"], 4)
+        partial = compare_training_text("The cat ran.", ["The cat sat."])
+        self.assertFalse(partial["exact_training_match"])
+        self.assertEqual(partial["longest_training_token_match"], 2)
+
     def test_sampling_is_repeatable_and_stops_at_eos(self):
         model = RNNGenerator(len(self.vocab), hidden_dim=8)
         with torch.no_grad():
