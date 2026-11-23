@@ -1,0 +1,9 @@
+{
+  "prompt": "why did the",
+  "text": "why did the chicken cross the road? to get to the other? \"",
+  "ended_with_eos": true,
+  "seed": 42,
+  "temperature": 0.5,
+  "top_k": 5,
+  "exact_training_match": false
+}

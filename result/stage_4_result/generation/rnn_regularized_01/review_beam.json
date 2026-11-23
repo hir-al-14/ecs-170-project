@@ -1,0 +1,58 @@
+{
+  "checkpoint": "result/stage_4_result/generation/rnn_regularized_01/best.pt",
+  "epoch": 17,
+  "cell": "rnn",
+  "samples": [
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other side.",
+      "ended_with_eos": true,
+      "decoding": "beam",
+      "beam_size": 5,
+      "no_repeat_ngram_size": 3,
+      "length_penalty": 0.7,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a cow with no legs? a stick.",
+      "ended_with_eos": true,
+      "decoding": "beam",
+      "beam_size": 5,
+      "no_repeat_ngram_size": 3,
+      "length_penalty": 0.7,
+      "exact_training_match": false,
+      "longest_training_token_match": 10,
+      "matching_training_example": "What do you call a cow with no legs? Ground beef.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the fish say to the 8? nice belt.",
+      "ended_with_eos": true,
+      "decoding": "beam",
+      "beam_size": 5,
+      "no_repeat_ngram_size": 3,
+      "length_penalty": 0.7,
+      "exact_training_match": false,
+      "longest_training_token_match": 8,
+      "matching_training_example": "What did the 0 say to the 8? Nice belt.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    }
+  ]
+}

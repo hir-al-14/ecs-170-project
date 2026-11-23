@@ -1,0 +1,151 @@
+{
+  "checkpoint": "result/stage_4_result/generation/rnn_regularized_01/best.pt",
+  "epoch": 17,
+  "cell": "rnn",
+  "samples": [
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? because it was a little - - - - - - - - - - - / / www. youtube. com / watch? v = - post - / / / www. youtube. com / watch? v = *",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 12,
+      "matching_training_example": "What kind of pants does Super Mario wear? [Denim, denim, denim.](http://www.youtube.com/watch?v=c0SuIMUoShI)",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other side.",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other side.",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a cow with a vest? a - - - - - - - - - - - - - / - / - - - - / - post - / / / / / / / www. youtube. com / watch? v = *",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 12,
+      "matching_training_example": "What kind of pants does Super Mario wear? [Denim, denim, denim.](http://www.youtube.com/watch?v=c0SuIMUoShI)",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a fish with a vest? a - - - - - - - - - / / www. youtube. com / watch? v =",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 12,
+      "matching_training_example": "What kind of pants does Super Mario wear? [Denim, denim, denim.](http://www.youtube.com/watch?v=c0SuIMUoShI)",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a group of a vest? a cow.",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 7,
+      "matching_training_example": "What do you call a group of Combi's? A Combi nation!",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the fish say to the other? \" hey, \" \" \" \" \" \" \" \" \" \" \" \" \" \" \" i was the dog. \"",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 6,
+      "matching_training_example": "What did one casket say to the other? \"Is that you coffin?\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the fish say to the other? \"",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 6,
+      "matching_training_example": "What did one casket say to the other? \"Is that you coffin?\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the fish say to the other? \"",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 6,
+      "matching_training_example": "What did one casket say to the other? \"Is that you coffin?\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    }
+  ]
+}

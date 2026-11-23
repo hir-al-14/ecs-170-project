@@ -1,0 +1,8 @@
+{
+  "prompt": "why did the",
+  "text": "why did the chicken cross the road? to get to the other, quack, quack!",
+  "ended_with_eos": true,
+  "seed": 42,
+  "temperature": 0.5,
+  "top_k": 5
+}

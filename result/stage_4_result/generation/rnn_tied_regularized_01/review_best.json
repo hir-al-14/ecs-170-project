@@ -1,0 +1,151 @@
+{
+  "checkpoint": "result/stage_4_result/generation/rnn_tied_regularized_01/best.pt",
+  "epoch": 17,
+  "cell": "rnn",
+  "samples": [
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other, \"",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 13,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other, \"",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 13,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other, i was a - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -",
+      "ended_with_eos": false,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 13,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a cow that doesn't on a field and a lot of a tree? a pool.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 8,
+      "matching_training_example": "What do you call a cow that doesn't give milk? A Milk Dud.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a group of people? a a pair of a pair of the bartender says the bartender who was the old......................................",
+      "ended_with_eos": false,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 8,
+      "matching_training_example": "What do you call a group of people standing in the arctic circle? A Finnish line.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a group of a pair of a pair of a man who doesn't want to get to the other? because a impeached..",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 7,
+      "matching_training_example": "What do you call a group of Combi's? A Combi nation!",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the fish say when it hit the wall? dam",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 12,
+      "matching_training_example": "What did the fish say when it hit the wall? Dam.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the green say to the other? \"",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 6,
+      "matching_training_example": "What did one casket say to the other? \"Is that you coffin?\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the one say to the other? \"",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 6,
+      "matching_training_example": "What did one casket say to the other? \"Is that you coffin?\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    }
+  ]
+}

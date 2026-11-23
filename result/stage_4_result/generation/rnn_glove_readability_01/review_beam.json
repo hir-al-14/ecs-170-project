@@ -1,0 +1,58 @@
+{
+  "checkpoint": "result/stage_4_result/generation/rnn_glove_readability_01/last.pt",
+  "epoch": 40,
+  "cell": "rnn",
+  "samples": [
+    {
+      "prompt": "why did the",
+      "text": "why did the wave fail the driving test? it kept crashing on the beach.",
+      "ended_with_eos": true,
+      "decoding": "beam",
+      "beam_size": 5,
+      "no_repeat_ngram_size": 3,
+      "length_penalty": 0.7,
+      "exact_training_match": true,
+      "longest_training_token_match": 16,
+      "matching_training_example": "Why did the wave fail the driving test? It kept crashing on the beach.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you get when you drop a piano down a mineshaft? a flat miner.",
+      "ended_with_eos": true,
+      "decoding": "beam",
+      "beam_size": 5,
+      "no_repeat_ngram_size": 3,
+      "length_penalty": 0.7,
+      "exact_training_match": true,
+      "longest_training_token_match": 17,
+      "matching_training_example": "What do you get when you drop a piano down a mineshaft? A flat miner.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the bartender say to the jumper cables? you better not try to start anything.",
+      "ended_with_eos": true,
+      "decoding": "beam",
+      "beam_size": 5,
+      "no_repeat_ngram_size": 3,
+      "length_penalty": 0.7,
+      "exact_training_match": true,
+      "longest_training_token_match": 18,
+      "matching_training_example": "What did the bartender say to the jumper cables? You better not try to start anything.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    }
+  ]
+}
