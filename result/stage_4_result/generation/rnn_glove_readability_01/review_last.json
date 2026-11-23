@@ -1,0 +1,152 @@
+{
+  "checkpoint": "result/stage_4_result/generation/rnn_glove_readability_01/last.pt",
+  "epoch": 40,
+  "cell": "rnn",
+  "samples": [
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other side.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": "readable",
+        "coherence": "coherent",
+        "notes": "Complete question and answer; exact training example."
+      }
+    },
+    {
+      "prompt": "why did the",
+      "text": "why did the wave fail the driving test? it kept crashing on the beach.",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 16,
+      "matching_training_example": "Why did the wave fail the driving test? It kept crashing on the beach.",
+      "manual_review": {
+        "grammar": "readable",
+        "coherence": "coherent",
+        "notes": "Complete question and answer; exact training example."
+      }
+    },
+    {
+      "prompt": "why did the",
+      "text": "why did the chicken cross the road? to get to the other side.",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "Why did the chicken cross the road? To get to the other side.",
+      "manual_review": {
+        "grammar": "readable",
+        "coherence": "coherent",
+        "notes": "Same output as seed 7; exact training example."
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call someone who makes a lot of money through deforestation of the amazon? the part.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 17,
+      "matching_training_example": "What do you call someone who makes a lot of money through deforestation of the Amazon? A Brazillionaire!",
+      "manual_review": {
+        "grammar": "mostly grammatical",
+        "coherence": "unclear",
+        "notes": "The question is readable but the answer does not form a clear punchline."
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a number that cant keep still? a roamin numeral.",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "What do you call a number that cant keep still? A roamin numeral.",
+      "manual_review": {
+        "grammar": "readable with spelling issues",
+        "coherence": "coherent",
+        "notes": "Recognizable numeral pun; exact training example."
+      }
+    },
+    {
+      "prompt": "what do you",
+      "text": "what do you call a mexican with crazy intentions? a locomotive!",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 13,
+      "matching_training_example": "What do you call a Mexican with crazy intentions? A locomotive!",
+      "manual_review": {
+        "grammar": "readable",
+        "coherence": "coherent",
+        "notes": "Recognizable wordplay; exact training example."
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the three holes in the ground say? well, well, well my grandpa's favorite joke. took me five years to get it.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": true,
+      "longest_training_token_match": 28,
+      "matching_training_example": "What did the three holes in the ground say? Well, well, well My grandpa's favorite joke. Took me five years to get it.",
+      "manual_review": {
+        "grammar": "partially readable",
+        "coherence": "mostly coherent",
+        "notes": "Contains a recognizable punchline followed by an informal comment; exact training example."
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the three holes in the ground?",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 8,
+      "matching_training_example": "What did the three holes in the ground say? Well, well, well My grandpa's favorite joke. Took me five years to get it.",
+      "manual_review": {
+        "grammar": "incomplete",
+        "coherence": "unclear",
+        "notes": "Incomplete question without a complete predicate or answer."
+      }
+    },
+    {
+      "prompt": "what did the",
+      "text": "what did the three holes in the ground?",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.4,
+      "top_k": 3,
+      "exact_training_match": false,
+      "longest_training_token_match": 8,
+      "matching_training_example": "What did the three holes in the ground say? Well, well, well My grandpa's favorite joke. Took me five years to get it.",
+      "manual_review": {
+        "grammar": "incomplete",
+        "coherence": "unclear",
+        "notes": "Same incomplete output as seed 42."
+      }
+    }
+  ],
+  "conclusion": "Readable outputs are demonstrated for some prompts, but memorization and failures remain. The final checkpoint was inspected for readability; it is not the minimum-validation-loss checkpoint."
+}

@@ -1,0 +1,199 @@
+{
+  "checkpoint": "result/stage_4_result/generation/rnn_glove_readability_01/last.pt",
+  "epoch": 40,
+  "cell": "rnn",
+  "samples": [
+    {
+      "prompt": "why did a",
+      "text": "why did a chicken cross the road? to get to the other bride.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 11,
+      "matching_training_example": "Why did the bigamist cross the road? To get to the other bride.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "why did a",
+      "text": "why did a chicken cross the road? to get to the other bride.",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 11,
+      "matching_training_example": "Why did the bigamist cross the road? To get to the other bride.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "why did a",
+      "text": "why did a chicken and a guitar? you can't tuna fish!!!",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 9,
+      "matching_training_example": "What's the difference between a fish and a guitar? You can't tuna fish!",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what does the",
+      "text": "what does the horse call the pigs on his farm? neigh - boars.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "What does the horse call the pigs on his farm? Neigh-boars.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what does the",
+      "text": "what does the horse call a pigs that just live in? because he was a little horse.",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 6,
+      "matching_training_example": "Why couldn't the pony sing? He was a little horse.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "what does the",
+      "text": "what does the horse call the pigs on his farm? neigh - boars.",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": true,
+      "longest_training_token_match": 15,
+      "matching_training_example": "What does the horse call the pigs on his farm? Neigh-boars.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "a man walks",
+      "text": "a man walks into a bar... and says, \" why do soft or holding for money.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 11,
+      "matching_training_example": "So a polar bear walks into a bar... and says, \"I'll have a gin.....and tonic\" The bartender says, \"What's with the big pause?\" And the polar bear says, \"Oh, I've always had them.\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "a man walks",
+      "text": "a man walks into a bar... and says, \" why didn't have the best before about corn? \" they are you can make a hold... it turned out the dog.",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 11,
+      "matching_training_example": "So a polar bear walks into a bar... and says, \"I'll have a gin.....and tonic\" The bartender says, \"What's with the big pause?\" And the polar bear says, \"Oh, I've always had them.\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "a man walks",
+      "text": "a man walks into a bar... and says, \" why do soft or holding for money.",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 11,
+      "matching_training_example": "So a polar bear walks into a bar... and says, \"I'll have a gin.....and tonic\" The bartender says, \"What's with the big pause?\" And the polar bear says, \"Oh, I've always had them.\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "i went to",
+      "text": "i went to the store and asked for a plant his full of bread and a guitar...... and pulled a mussel.",
+      "ended_with_eos": true,
+      "seed": 7,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": false,
+      "longest_training_token_match": 11,
+      "matching_training_example": "I went to a seafood disco last week... ...and pulled a mussel.",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "i went to",
+      "text": "i went to the store and asked for a one handed sailor... he said sorry, \" i'm a wholesaler. \"",
+      "ended_with_eos": true,
+      "seed": 42,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": true,
+      "longest_training_token_match": 25,
+      "matching_training_example": "I went to the store and asked for a one handed sailor... he said sorry, \"I'm a wholesaler.\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    },
+    {
+      "prompt": "i went to",
+      "text": "i went to the store and asked for a one handed sailor... he said sorry, \" i'm a wholesaler. \"",
+      "ended_with_eos": true,
+      "seed": 99,
+      "temperature": 0.5,
+      "top_k": 5,
+      "exact_training_match": true,
+      "longest_training_token_match": 25,
+      "matching_training_example": "I went to the store and asked for a one handed sailor... he said sorry, \"I'm a wholesaler.\"",
+      "manual_review": {
+        "grammar": null,
+        "coherence": null,
+        "notes": "Not yet reviewed"
+      }
+    }
+  ]
+}
