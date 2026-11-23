@@ -1,7 +1,7 @@
 """Recurrent next-token models for Stage 4 joke generation."""
 
 import torch.nn as nn
-from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
 class RNNGenerator(nn.Module):
@@ -12,6 +12,8 @@ class RNNGenerator(nn.Module):
         hidden_dim=128,
         dropout=0.4,
         cell_type="rnn",
+        tie_embeddings=False,
+        embedding_dropout=0.0,
     ):
         super().__init__()
 
@@ -29,6 +31,8 @@ class RNNGenerator(nn.Module):
             embedding_dim,
             padding_idx=0,
         )
+        self.embedding_dropout = nn.Dropout(embedding_dropout)
+        self.tie_embeddings = tie_embeddings
 
         self.recurrent = recurrent_layers[cell_type](
             input_size=embedding_dim,
@@ -37,10 +41,16 @@ class RNNGenerator(nn.Module):
         )
 
         self.dropout = nn.Dropout(dropout)
-        self.output = nn.Linear(hidden_dim, vocab_size)
+        if tie_embeddings:
+            self.projection = nn.Linear(hidden_dim, embedding_dim)
+            self.output = nn.Linear(embedding_dim, vocab_size)
+            self.output.weight = self.embedding.weight
+        else:
+            self.projection = nn.Identity()
+            self.output = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, token_ids, lengths):
-        embeddings = self.embedding(token_ids)
+        embeddings = self.embedding_dropout(self.embedding(token_ids))
 
         packed = pack_padded_sequence(
             embeddings,
@@ -56,4 +66,16 @@ class RNNGenerator(nn.Module):
             hidden = hidden[0]
 
         final_hidden = hidden[-1]
-        return self.output(self.dropout(final_hidden))
+        return self.output(self.projection(self.dropout(final_hidden)))
+
+    def forward_sequence(self, token_ids, lengths):
+        """Predict every next token in a batch of complete training examples."""
+        embeddings = self.embedding_dropout(self.embedding(token_ids))
+        packed = pack_padded_sequence(
+            embeddings, lengths.cpu(), batch_first=True, enforce_sorted=False,
+        )
+        packed_output, _ = self.recurrent(packed)
+        output, _ = pad_packed_sequence(
+            packed_output, batch_first=True, total_length=token_ids.size(1),
+        )
+        return self.output(self.projection(self.dropout(output)))

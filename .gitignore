@@ -187,3 +187,5 @@ fabric.properties
 *:Zone.Identifier
 
 __pycache__/
+# Intermediate generation snapshots; selected checkpoints are tracked.
+result/stage_4_result/generation/*/epoch_*.pt

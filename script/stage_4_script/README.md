@@ -220,3 +220,42 @@ fill. Saved `review_last.json` includes qualitative observations and failures;
 `review_best.json` and `review_additional.json` preserve other sampled outputs.
 Perplexity alone and absence of an exact match are not evidence of coherent,
 original writing. Training loss histories remain available for Doga's plots.
+
+## Regularized generation experiments
+
+`--sequence-training` predicts all next tokens in a complete example together.
+It uses the same causal RNN; a test verifies that its evaluation loss matches
+rolling-prefix evaluation when the complete examples fit the context window.
+This reduces repeated prefix processing, so epoch counts and optimizer-step
+counts should not be treated as identical to earlier rolling-window runs.
+
+Additional options are `--min-freq`, `--embedding-dropout`, `--weight-decay`,
+`--patience`, `--tie-embeddings`, and `--freeze-embeddings`. All default to the
+original behavior. Filtering singleton training words with `--min-freq 2`
+reduces the vocabulary from 4,157 to 1,643 tokens and supplies actual UNK targets
+in training. Validation loss/perplexity must not be directly compared across
+these two vocabularies. All experiments keep the original data partitions.
+
+Completed same-vocabulary RNN comparisons:
+- `rnn_tied_regularized_01`: tied embeddings, 256 hidden units; best epoch 17.
+- `rnn_regularized_01`: untied embeddings, 256 hidden units; best epoch 17.
+- `rnn_regularized_02`: untied embeddings, 128 hidden units; best epoch 35.
+
+The smaller untied RNN has the lowest validation loss of these three RNNs.
+The regularized models still have inconsistent output. The frozen, unfiltered
+experiment `rnn_tied_frozen_01` was not an improvement. The existing LSTM
+*generation* option was also tested in `lstm_regularized_01`; no classifier
+architecture was added or changed.
+
+For a deterministic readability demonstration, beam decoding keeps five
+candidate continuations and blocks repeated trigrams:
+
+```bash
+.venv/bin/python -m script.stage_4_script.generate_text result/stage_4_result/generation/rnn_glove_readability_01/last.pt --prompt "what did the" --beam-size 5 --plain --compare-training
+```
+
+`review_beam.json` preserves all three default prompt outputs. For this model,
+all three are readable training reproductions. This improves the demonstration's
+consistency, not evidence of novelty or held-out generalization. The original
+sampling reviews are retained alongside it. Summary tables identify vocabulary
+size to prevent misleading perplexity comparisons across experiments.

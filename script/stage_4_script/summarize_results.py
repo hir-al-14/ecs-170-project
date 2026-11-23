@@ -3,6 +3,8 @@
 import argparse
 import csv
 import json
+
+import torch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,8 +40,10 @@ def collect_results(result_dir):
         metrics = json.loads(path.read_text())
         config = json.loads((folder / "config.json").read_text())
         sample = json.loads((folder / "sample.json").read_text())
+        checkpoint = torch.load(folder / "best.pt", map_location="cpu", weights_only=True)
         generation.append({
             "experiment": folder.name, "model": config["cell"], "split": "validation",
+            "vocab_size": len(checkpoint["vocab"]), "min_freq": config.get("min_freq", 1),
             "best_epoch": metrics["best_epoch"],
             "loss": metrics["validation_loss"],
             "perplexity": metrics["validation_perplexity"],
@@ -66,6 +70,7 @@ def main():
         print(f"\n{row['experiment']} (manual readability review required):\n{row['sample']}")
     print(f"\nSaved comparison tables to {args.output}")
     print("Classification tuning summaries remain separate under classification_tuning/.")
+    print("Generation loss/perplexity comparisons require the same vocabulary and preprocessing.")
 
 
 if __name__ == "__main__":

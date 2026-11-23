@@ -10,6 +10,7 @@ import torch
 from local_code.stage_4_code.Method_RNN_Generation import RNNGenerator
 from local_code.stage_4_code.Text_Preprocessor import tokenize
 from script.stage_4_script.run_generation import ROOT, generate
+from local_code.stage_4_code.Generation_Decoder import beam_generate
 
 
 def compare_training_text(text, training_texts):
@@ -38,6 +39,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--temperature", type=float, default=0.5)
     parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--beam-size", type=int, default=0)
     parser.add_argument("--seeds", type=int, nargs="+", default=[7, 42, 99])
     parser.add_argument("--prompts", nargs="+", default=["why did the", "what do you", "what did the"])
     args = parser.parse_args()
@@ -47,9 +49,13 @@ def main():
     training = json.loads(args.data.read_text())["splits"]["train"]
     samples = []
     for prompt in args.prompts:
-        for seed in args.seeds:
-            sample = generate(model, checkpoint["vocab"], prompt, checkpoint["context_length"],
-                              60, args.temperature, seed, args.top_k)
+        for seed in ([None] if args.beam_size else args.seeds):
+            if args.beam_size:
+                sample = beam_generate(model, checkpoint["vocab"], prompt,
+                                       checkpoint["context_length"], 60, args.beam_size)
+            else:
+                sample = generate(model, checkpoint["vocab"], prompt, checkpoint["context_length"],
+                                  60, args.temperature, seed, args.top_k)
             sample.update(compare_training_text(sample["text"], training))
             sample["manual_review"] = {"grammar": None, "coherence": None, "notes": "Not yet reviewed"}
             samples.append(sample)

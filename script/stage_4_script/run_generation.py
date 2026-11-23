@@ -12,9 +12,10 @@ from torch.utils.data import DataLoader
 
 from local_code.stage_4_code.Method_RNN_Generation import RNNGenerator
 from local_code.stage_4_code.Config import get_glove_path
+from local_code.stage_4_code.Generation_Sequences import JokeSequenceDataset, collate_sequences
 from local_code.stage_4_code.Text_Preprocessor import (
     BOS_ID, EOS_ID, PAD_ID, UNK_ID, JokeDataset, collate_jokes,
-    detokenize, encode_prompt, tokenize, load_glove_matrix,
+    detokenize, encode_prompt, tokenize, load_glove_matrix, build_vocab,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,16 +31,27 @@ def run_epoch(model, loader, device, optimizer=None):
             contexts, targets = contexts.to(device), targets.to(device)
             if training:
                 optimizer.zero_grad()
-            logits = model(contexts, lengths)
-            loss = nn.functional.cross_entropy(logits, targets)
+            if targets.ndim == 2:
+                logits = model.forward_sequence(contexts, lengths)
+                loss = nn.functional.cross_entropy(
+                    logits.flatten(0, 1), targets.flatten(), ignore_index=PAD_ID,
+                )
+                count = (targets != PAD_ID).sum().item()
+            else:
+                logits = model(contexts, lengths)
+                loss = nn.functional.cross_entropy(logits, targets)
+                count = targets.size(0)
             if not torch.isfinite(loss):
                 raise RuntimeError("Nonfinite loss; try a smaller learning rate")
             if training:
                 loss.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
-            total_loss += loss.item() * targets.size(0)
-            total += targets.size(0)
+                if model.tie_embeddings:
+                    with torch.no_grad():
+                        model.embedding.weight[PAD_ID].zero_()
+            total_loss += loss.item() * count
+            total += count
     if total == 0:
         raise ValueError("No next-token examples in this split")
     return total_loss / total
@@ -108,6 +120,14 @@ def main():
     parser.add_argument("--evaluate-test", action="store_true", help="Only use after selecting settings on validation data")
     parser.add_argument("--glove", action="store_true", help="Initialize embeddings with the supplied GloVe file")
     parser.add_argument("--top-k", type=int, default=0, help="Sample from the k most likely tokens; 0 uses all tokens")
+    parser.add_argument("--sequence-training", action="store_true", help="Train all positions in each example together")
+    parser.add_argument("--tie-embeddings", action="store_true", help="Share input and output word vectors")
+    parser.add_argument("--freeze-embeddings", action="store_true", help="Keep pretrained embeddings fixed")
+    parser.add_argument("--embedding-dropout", type=float, default=0.0)
+    parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--patience", type=int, default=0, help="Stop after this many unimproved epochs; 0 disables")
+    parser.add_argument("--save-every", type=int, default=0, help="Also retain a checkpoint every n epochs")
+    parser.add_argument("--min-freq", type=int, default=1, help="Minimum training frequency for a vocabulary word")
     args = parser.parse_args()
     if min(args.epochs, args.batch_size, args.hidden_dim, args.embedding_dim,
            args.context_length, args.max_tokens) < 1:
@@ -120,16 +140,29 @@ def main():
         parser.error("Dropout must be between 0 (inclusive) and 1 (exclusive)")
     if args.top_k < 0:
         parser.error("top-k must be nonnegative")
+    if not 0 <= args.embedding_dropout < 1:
+        parser.error("Embedding dropout must be between 0 and 1")
+    if not math.isfinite(args.weight_decay) or args.weight_decay < 0:
+        parser.error("Weight decay must be finite and nonnegative")
+    if args.patience < 0 or args.save_every < 0:
+        parser.error("Patience and checkpoint interval must be nonnegative")
+    if args.min_freq < 1:
+        parser.error("Minimum word frequency must be positive")
+    if args.freeze_embeddings and not args.glove:
+        parser.error("Frozen embeddings require GloVe initialization")
     raw = args.data.read_bytes()
     prepared = json.loads(raw)
     vocab = prepared["vocab"]
+    if args.min_freq > 1:
+        vocab = build_vocab(prepared["splits"]["train"], max_vocab_size=len(vocab), min_freq=args.min_freq)
     prompt_ids = encode_prompt(args.prompt, vocab)
     if UNK_ID in prompt_ids:
         parser.error("Prompt words must be present in the training vocabulary")
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
     model_config = dict(vocab_size=len(vocab), embedding_dim=args.embedding_dim,
-                        hidden_dim=args.hidden_dim, dropout=args.dropout, cell_type=args.cell)
+                        hidden_dim=args.hidden_dim, dropout=args.dropout, cell_type=args.cell,
+                        tie_embeddings=args.tie_embeddings, embedding_dropout=args.embedding_dropout)
     model = RNNGenerator(**model_config).to(device)
     if args.glove:
         print("Loading GloVe embeddings...", flush=True)
@@ -138,12 +171,16 @@ def main():
         with torch.no_grad():
             model.embedding.weight.copy_(weights.to(device))
         print(f"GloVe coverage: {matched}/{len(vocab)} vocabulary entries", flush=True)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    if args.freeze_embeddings:
+        model.embedding.weight.requires_grad_(False)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    dataset_class = JokeSequenceDataset if args.sequence_training else JokeDataset
+    collate = collate_sequences if args.sequence_training else collate_jokes
     loaders = {}
     for name in ("train", "validation"):
-        dataset = JokeDataset(prepared["splits"][name], vocab, args.context_length)
+        dataset = dataset_class(prepared["splits"][name], vocab, args.context_length)
         loaders[name] = DataLoader(dataset, batch_size=args.batch_size, shuffle=name == "train",
-                                   collate_fn=collate_jokes,
+                                   collate_fn=collate,
                                    generator=torch.Generator().manual_seed(args.seed))
     # A fresh directory prevents experiments from overwriting each other.
     args.output.mkdir(parents=True, exist_ok=False)
@@ -154,6 +191,7 @@ def main():
     history = {"train_loss": [], "validation_loss": []}
     best_loss = math.inf
     best_epoch = None
+    stale_epochs = 0
     for epoch in range(1, args.epochs + 1):
         train_loss = run_epoch(model, loaders["train"], device, optimizer)
         validation_loss = run_epoch(model, loaders["validation"], device)
@@ -161,12 +199,23 @@ def main():
         history["validation_loss"].append(validation_loss)
         if validation_loss < best_loss:
             best_loss, best_epoch = validation_loss, epoch
+            stale_epochs = 0
             torch.save({"model_state": model.state_dict(), "model_config": model_config,
                         "vocab": vocab, "context_length": args.context_length,
                         "epoch": epoch, "validation_loss": best_loss,
                         "experiment": config}, args.output / "best.pt")
+        else:
+            stale_epochs += 1
+        if args.save_every and epoch % args.save_every == 0:
+            torch.save({"model_state": model.state_dict(), "model_config": model_config,
+                        "vocab": vocab, "context_length": args.context_length,
+                        "epoch": epoch, "validation_loss": validation_loss,
+                        "experiment": config}, args.output / f"epoch_{epoch:03d}.pt")
         (args.output / "history.json").write_text(json.dumps(history, indent=2))
         print(f"Epoch {epoch}: train loss {train_loss:.4f}, validation loss {validation_loss:.4f}", flush=True)
+        if args.patience and stale_epochs >= args.patience:
+            print("Stopped after validation loss stopped improving.", flush=True)
+            break
     # Keep the final model as well as the minimum-loss model so qualitative
     # comparisons do not require retraining or silently replacing best.pt.
     torch.save({"model_state": model.state_dict(), "model_config": model_config,
@@ -181,8 +230,8 @@ def main():
     results = {"best_epoch": best_epoch, "validation_loss": best_loss,
                "validation_perplexity": math.exp(min(best_loss, 700))}
     if args.evaluate_test:
-        test = JokeDataset(prepared["splits"]["test"], vocab, args.context_length)
-        loader = DataLoader(test, batch_size=args.batch_size, collate_fn=collate_jokes)
+        test = dataset_class(prepared["splits"]["test"], vocab, args.context_length)
+        loader = DataLoader(test, batch_size=args.batch_size, collate_fn=collate)
         test_loss = run_epoch(model, loader, device)
         results.update(test_loss=test_loss, test_perplexity=math.exp(min(test_loss, 700)))
     sample = generate(model, vocab, args.prompt, args.context_length,
